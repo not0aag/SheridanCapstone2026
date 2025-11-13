@@ -18,3 +18,94 @@ datasets/
 # ML checkpoints
 /models/
 /logs/
+
+# ===================================
+# CI/CD and Build Artifacts
+# ===================================
+
+# Test coverage reports
+coverage/
+*.coverage
+htmlcov/
+.coverage
+coverage.xml
+.pytest_cache/
+
+# Build outputs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===================================
+# Mock Server
+# ===================================
+
+# Mock server environment
+tools/mock-server/.env
+tools/mock-server/node_modules/
+tools/mock-server/uploads/
+
+# ===================================
+# Mobile App
+# ===================================
+
+# React Native
+mobile/node_modules/
+mobile/.expo/
+mobile/.expo-shared/
+mobile/dist/
+mobile/npm-debug.*
+mobile/*.jks
+mobile/*.p8
+mobile/*.p12
+mobile/*.key
+mobile/*.mobileprovision
+mobile/*.orig.*
+mobile/web-build/
+
+# Android
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/captures/
+mobile/android/.externalNativeBuild
+mobile/android/.cxx
+mobile/android/local.properties
+*.apk
+*.aab
+
+# iOS
+mobile/ios/Pods/
+mobile/ios/build/
+mobile/ios/*.xcworkspace
+mobile/ios/*.xcuserdata
+mobile/ios/DerivedData/
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ===================================
+# Backend
+# ===================================
+
+backend/node_modules/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/.venv
+backend/venv/
+backend/instance/
+backend/htmlcov/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/bandit-report.json
+
+# ===================================
+# Integration Tests
+# ===================================
+
+tests/integration/node_modules/
+tests/integration/.env.test
+tests/integration/coverage/
+tests/integration/output_*.ipynb

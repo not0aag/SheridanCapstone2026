@@ -1,0 +1,294 @@
+openapi: 3.0.3
+info:
+  title: SafeDrive AI API (Phase 1 Draft)
+  version: 0.1.0
+  description: Initial draft API for prototype. JWT-based auth; pre-signed S3 URLs for video upload.
+servers:
+  - url: https://api.safedrive.local/v1
+    description: Development
+  - url: https://api.safedrive.ai/v1
+    description: Production
+security:
+  - bearerAuth: []
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+        "400": { $ref: "#/components/responses/BadRequest" }
+  /auth/login:
+    post:
+      summary: Login and receive JWT token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthToken"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /users/me:
+    get:
+      summary: Get current user's profile
+      tags: [Users]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /trips/start:
+    post:
+      summary: Start a new trip
+      tags: [Trips]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TripStartRequest"
+      responses:
+        "201":
+          description: Trip started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+  /trips/stop:
+    post:
+      summary: Stop current trip
+      tags: [Trips]
+      requestBody:
+        required: false
+      responses:
+        "200":
+          description: Trip stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trip"
+        "404": { $ref: "#/components/responses/NotFound" }
+  /trips:
+    get:
+      summary: List user's trips
+      tags: [Trips]
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - in: query
+          name: offset
+          schema: { type: integer, minimum: 0, default: 0 }
+      responses:
+        "200":
+          description: Trip list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Trip" }
+  /incidents:
+    post:
+      summary: Log an incident for the active or specified trip
+      tags: [Incidents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncidentCreate"
+      responses:
+        "201":
+          description: Incident created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+  /incidents/trip/{tripId}:
+    get:
+      summary: Get incidents for a trip
+      tags: [Incidents]
+      parameters:
+        - in: path
+          name: tripId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Incidents list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Incident" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /videos/upload:
+    post:
+      summary: Request pre-signed URL for chunked video upload
+      tags: [Videos]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoUploadInit"
+      responses:
+        "200":
+          description: Upload session created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoUploadInitResponse"
+  /videos/{videoId}:
+    get:
+      summary: Get video metadata and pre-signed URL for download
+      tags: [Videos]
+      parameters:
+        - in: path
+          name: videoId
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Video details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Video"
+        "404": { $ref: "#/components/responses/NotFound" }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+        name: { type: string }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+    AuthToken:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, example: Bearer }
+        expires_in: { type: integer, example: 3600 }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+    TripStartRequest:
+      type: object
+      properties:
+        vehicle_id: { type: string }
+        start_location: { $ref: "#/components/schemas/GeoPoint" }
+    Trip:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        started_at: { type: string, format: date-time }
+        ended_at: { type: string, format: date-time, nullable: true }
+        start_location: { $ref: "#/components/schemas/GeoPoint" }
+        end_location: { $ref: "#/components/schemas/GeoPoint" }
+        status: { type: string, enum: [active, completed] }
+    IncidentCreate:
+      type: object
+      required: [trip_id, type, detected_at]
+      properties:
+        trip_id: { type: string, format: uuid }
+        type: { type: string, enum: [distraction, drowsiness, crash, other] }
+        severity: { type: string, enum: [low, medium, high], default: low }
+        detected_at: { type: string, format: date-time }
+        details: { type: object, additionalProperties: true }
+    Incident:
+      allOf:
+        - $ref: "#/components/schemas/IncidentCreate"
+        - type: object
+          properties:
+            id: { type: string, format: uuid }
+    VideoUploadInit:
+      type: object
+      properties:
+        trip_id: { type: string, format: uuid }
+        filename: { type: string }
+        content_type: { type: string, example: video/mp4 }
+        size_bytes: { type: integer }
+        encoding: { type: string, example: H.264 }
+    VideoUploadInitResponse:
+      type: object
+      properties:
+        upload_id: { type: string }
+        presigned_urls:
+          type: array
+          items: { type: string, format: uri }
+        chunk_size: { type: integer, example: 5242880 }
+    Video:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        trip_id: { type: string, format: uuid }
+        url: { type: string, format: uri }
+        duration_seconds: { type: number }
+        created_at: { type: string, format: date-time }
+    GeoPoint:
+      type: object
+      properties:
+        lat: { type: number }
+        lon: { type: number }
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+        code: { type: string }
