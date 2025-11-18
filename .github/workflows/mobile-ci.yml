@@ -4,12 +4,12 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'mobile/**'
-      - '.github/workflows/mobile-ci.yml'
+      - "mobile/**"
+      - ".github/workflows/mobile-ci.yml"
   pull_request:
     branches: [main, develop]
     paths:
-      - 'mobile/**'
+      - "mobile/**"
 
 jobs:
   # ===========================
@@ -19,26 +19,26 @@ jobs:
     name: Lint & Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: mobile/package-lock.json
-      
+
       - name: Install dependencies
         working-directory: mobile
         run: npm ci
-      
+
       - name: Run ESLint
         working-directory: mobile
         run: npm run lint
-      
+
       - name: Run TypeScript type check
         working-directory: mobile
         run: npx tsc --noEmit
@@ -50,30 +50,30 @@ jobs:
     name: Unit Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+
     strategy:
       matrix:
         node-version: [18, 20]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: mobile/package-lock.json
-      
+
       - name: Install dependencies
         working-directory: mobile
         run: npm ci
-      
+
       - name: Run unit tests
         working-directory: mobile
         run: npm test -- --coverage --watchAll=false
-      
+
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
         with:
@@ -89,31 +89,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     needs: [lint, test]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: mobile/package-lock.json
-      
+
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
-      
+          distribution: "temurin"
+          java-version: "17"
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-      
+
       - name: Install dependencies
         working-directory: mobile
         run: npm ci
-      
+
       - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
@@ -123,15 +123,15 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
-      
+
       - name: Make Gradlew executable
         working-directory: mobile/android
         run: chmod +x ./gradlew
-      
+
       - name: Build Android Debug APK
         working-directory: mobile/android
         run: ./gradlew assembleDebug --no-daemon
-      
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v3
         with:
@@ -147,22 +147,22 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 30
     needs: [lint, test]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: mobile/package-lock.json
-      
+
       - name: Install dependencies
         working-directory: mobile
         run: npm ci
-      
+
       - name: Cache CocoaPods
         uses: actions/cache@v3
         with:
@@ -170,11 +170,11 @@ jobs:
           key: ${{ runner.os }}-pods-${{ hashFiles('mobile/ios/Podfile.lock') }}
           restore-keys: |
             ${{ runner.os }}-pods-
-      
+
       - name: Install CocoaPods dependencies
         working-directory: mobile/ios
         run: pod install
-      
+
       - name: Build iOS app
         working-directory: mobile/ios
         run: |
@@ -186,7 +186,7 @@ jobs:
             -derivedDataPath build \
             clean build \
             CODE_SIGNING_ALLOWED=NO
-      
+
       - name: Upload iOS build artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -202,7 +202,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, test, build-android, build-ios]
     if: success()
-    
+
     steps:
       - name: All checks passed
         run: echo "✅ All CI checks passed successfully!"

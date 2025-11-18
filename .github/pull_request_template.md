@@ -27,9 +27,9 @@ Fixes #
 
 <!-- List the main changes made in this PR -->
 
-- 
-- 
-- 
+-
+-
+-
 
 ## Testing
 
@@ -52,9 +52,9 @@ Fixes #
 
 ### Manual Testing Steps
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 ## Screenshots/Videos
 

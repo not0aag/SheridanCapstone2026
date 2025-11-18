@@ -57,6 +57,7 @@ npm start
 ```
 
 The mock server runs on **http://localhost:3001** and provides:
+
 - Complete API implementation matching OpenAPI spec
 - JWT authentication
 - Realistic mock data
@@ -81,6 +82,7 @@ npm run ios
 ```
 
 Features:
+
 - Front-facing camera preview
 - Accelerometer monitoring (crash detection)
 - GPS tracking for speed and trip detection
@@ -97,6 +99,7 @@ jupyter notebook distraction_detection_poc.ipynb
 ```
 
 Includes:
+
 - MediaPipe FaceMesh (468 landmarks)
 - EAR drowsiness detection
 - Crash detection algorithm
@@ -112,6 +115,7 @@ scripts\validate-project.cmd --all
 ```
 
 Options:
+
 - `--all` - Check all components (default)
 - `--mobile` - Check mobile app only
 - `--backend` - Check backend only
@@ -119,6 +123,7 @@ Options:
 - `--mock-server` - Check mock server only
 
 This runs:
+
 - Linting (ESLint, Ruff)
 - Type checking (TypeScript, mypy)
 - Tests (Jest, pytest)
@@ -133,6 +138,7 @@ Automated testing and build verification runs on every push and PR:
 - **ML CI**: Lint → Notebook tests → Model validation → Performance benchmarks → Model conversions
 
 All workflows include:
+
 - Dependency caching for faster builds
 - Matrix testing across multiple versions
 - Artifact uploads for build outputs
@@ -151,6 +157,7 @@ See `.github/workflows/` for complete pipeline configurations.
 ## Automated Dependency Updates
 
 Dependabot is configured to:
+
 - Check for dependency updates weekly (Mondays at 9 AM)
 - Group minor/patch updates to reduce PR noise
 - Automatically label PRs by component (mobile, backend, ml)

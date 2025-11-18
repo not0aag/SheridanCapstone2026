@@ -4,12 +4,12 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
+      - "backend/**"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [main, develop]
     paths:
-      - 'backend/**'
+      - "backend/**"
 
 jobs:
   # ===========================
@@ -19,16 +19,16 @@ jobs:
     name: Lint & Format Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
@@ -36,17 +36,17 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
           pip install ruff black mypy
-      
+
       - name: Run Ruff linter
         working-directory: backend
         run: ruff check .
-      
+
       - name: Check Black formatting
         working-directory: backend
         run: black --check .
@@ -58,16 +58,16 @@ jobs:
     name: Type Check
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
@@ -75,14 +75,14 @@ jobs:
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
-      
+
       - name: Install dependencies
         working-directory: backend
         run: |
           python -m pip install --upgrade pip
           pip install mypy
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      
+
       - name: Run mypy type checker
         working-directory: backend
         run: mypy app --ignore-missing-imports
@@ -94,11 +94,11 @@ jobs:
     name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    
+
     strategy:
       matrix:
-        python-version: ['3.11', '3.12']
-    
+        python-version: ["3.11", "3.12"]
+
     services:
       postgres:
         image: postgres:15
@@ -113,22 +113,22 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
+
     env:
       DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_safedrive
       SECRET_KEY: test-secret-key-for-ci
       JWT_SECRET: test-jwt-secret
       ENVIRONMENT: test
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Cache pip packages
         uses: actions/cache@v3
         with:
@@ -136,7 +136,7 @@ jobs:
           key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('**/requirements*.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-${{ matrix.python-version }}-
-      
+
       - name: Install dependencies
         working-directory: backend
         run: |
@@ -144,14 +144,14 @@ jobs:
           pip install pytest pytest-cov pytest-asyncio
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-      
+
       - name: Wait for PostgreSQL
         run: |
           until pg_isready -h localhost -p 5432; do
             echo "Waiting for PostgreSQL..."
             sleep 2
           done
-      
+
       - name: Run database migrations
         working-directory: backend
         run: |
@@ -159,24 +159,24 @@ jobs:
           if [ -f alembic.ini ]; then
             alembic upgrade head
           fi
-      
+
       - name: Run pytest with coverage
         working-directory: backend
         run: |
           pytest --cov=app --cov-report=xml --cov-report=term --cov-report=html -v
-      
+
       - name: Check coverage threshold
         working-directory: backend
         run: |
           coverage report --fail-under=70
-      
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
           files: backend/coverage.xml
           flags: backend
           name: backend-coverage-${{ matrix.python-version }}
-      
+
       - name: Upload coverage HTML report
         uses: actions/upload-artifact@v3
         with:
@@ -191,25 +191,25 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Install Bandit
         run: pip install bandit[toml]
-      
+
       - name: Run Bandit security scanner
         working-directory: backend
         run: |
           bandit -r app -f json -o bandit-report.json || true
           bandit -r app
-      
+
       - name: Upload Bandit report
         uses: actions/upload-artifact@v3
         if: always()
@@ -226,14 +226,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [lint, typecheck, test]
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Docker image
         working-directory: backend
         run: |
@@ -252,7 +252,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint, typecheck, test, security, docker-build]
     if: success()
-    
+
     steps:
       - name: All checks passed
         run: echo "✅ All backend CI checks passed successfully!"

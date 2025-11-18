@@ -54,6 +54,7 @@ Password: Alen123456!
 ### Authentication
 
 **Register new user**
+
 ```bash
 curl -X POST http://localhost:3001/auth/register ^
   -H "Content-Type: application/json" ^
@@ -61,6 +62,7 @@ curl -X POST http://localhost:3001/auth/register ^
 ```
 
 **Login**
+
 ```bash
 curl -X POST http://localhost:3001/auth/login ^
   -H "Content-Type: application/json" ^
@@ -68,12 +70,14 @@ curl -X POST http://localhost:3001/auth/login ^
 ```
 
 **Get profile** (requires JWT)
+
 ```bash
 curl -X GET http://localhost:3001/auth/profile ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Update profile**
+
 ```bash
 curl -X PUT http://localhost:3001/auth/profile ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN" ^
@@ -84,6 +88,7 @@ curl -X PUT http://localhost:3001/auth/profile ^
 ### Trips
 
 **Start trip**
+
 ```bash
 curl -X POST http://localhost:3001/trips/start ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN" ^
@@ -92,6 +97,7 @@ curl -X POST http://localhost:3001/trips/start ^
 ```
 
 **Stop trip**
+
 ```bash
 curl -X POST http://localhost:3001/trips/stop ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN" ^
@@ -100,12 +106,14 @@ curl -X POST http://localhost:3001/trips/stop ^
 ```
 
 **List trips**
+
 ```bash
 curl -X GET "http://localhost:3001/trips?limit=10&offset=0&status=completed" ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Get trip details**
+
 ```bash
 curl -X GET http://localhost:3001/trips/TRIP_ID ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
@@ -114,6 +122,7 @@ curl -X GET http://localhost:3001/trips/TRIP_ID ^
 ### Incidents
 
 **Create incident**
+
 ```bash
 curl -X POST http://localhost:3001/incidents ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN" ^
@@ -122,6 +131,7 @@ curl -X POST http://localhost:3001/incidents ^
 ```
 
 **Get trip incidents**
+
 ```bash
 curl -X GET http://localhost:3001/incidents/trip/TRIP_ID ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
@@ -130,6 +140,7 @@ curl -X GET http://localhost:3001/incidents/trip/TRIP_ID ^
 ### Videos
 
 **Upload video**
+
 ```bash
 curl -X POST http://localhost:3001/videos/upload ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN" ^
@@ -141,12 +152,14 @@ curl -X POST http://localhost:3001/videos/upload ^
 ```
 
 **Get video metadata**
+
 ```bash
 curl -X GET http://localhost:3001/videos/VIDEO_ID ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 **Get video download URL**
+
 ```bash
 curl -X GET http://localhost:3001/videos/VIDEO_ID/download ^
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
@@ -155,16 +168,19 @@ curl -X GET http://localhost:3001/videos/VIDEO_ID/download ^
 ### Debug Endpoints
 
 **View all data**
+
 ```bash
 curl -X GET http://localhost:3001/debug/data
 ```
 
 **Reset data**
+
 ```bash
 curl -X POST http://localhost:3001/debug/reset
 ```
 
 **Enable error simulation** (10% error rate)
+
 ```bash
 curl -X POST http://localhost:3001/debug/errors/enable ^
   -H "Content-Type: application/json" ^
@@ -172,16 +188,19 @@ curl -X POST http://localhost:3001/debug/errors/enable ^
 ```
 
 **Disable error simulation**
+
 ```bash
 curl -X POST http://localhost:3001/debug/errors/disable
 ```
 
 **Get API stats**
+
 ```bash
 curl -X GET http://localhost:3001/debug/stats
 ```
 
 **Health check**
+
 ```bash
 curl -X GET http://localhost:3001/debug/health
 ```
@@ -221,24 +240,24 @@ Create an API client in your React Native app:
 
 ```javascript
 // api-client.js
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Use your computer's local IP for testing on physical devices
 // Use localhost for emulator/simulator
-const API_BASE_URL = 'http://192.168.1.100:3001';
+const API_BASE_URL = "http://192.168.1.100:3001";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Add token to requests
 apiClient.interceptors.request.use(async (config) => {
-  const token = await AsyncStorage.getItem('authToken');
+  const token = await AsyncStorage.getItem("authToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -250,7 +269,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem("authToken");
       // Navigate to login screen
     }
     return Promise.reject(error);
@@ -263,54 +282,54 @@ export default apiClient;
 ### Usage Examples
 
 ```javascript
-import apiClient from './api-client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from "./api-client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Login
 const login = async () => {
   try {
-    const { data } = await apiClient.post('/auth/login', {
-      email: 'demo@safedrive.ai',
-      password: 'Demo123456!',
+    const { data } = await apiClient.post("/auth/login", {
+      email: "demo@safedrive.ai",
+      password: "Demo123456!",
     });
-    
-    await AsyncStorage.setItem('authToken', data.token);
-    console.log('Logged in as:', data.user.firstName);
+
+    await AsyncStorage.setItem("authToken", data.token);
+    console.log("Logged in as:", data.user.firstName);
   } catch (error) {
-    console.error('Login failed:', error.response?.data);
+    console.error("Login failed:", error.response?.data);
   }
 };
 
 // Start trip
 const startTrip = async (latitude, longitude) => {
   try {
-    const { data } = await apiClient.post('/trips/start', {
+    const { data } = await apiClient.post("/trips/start", {
       startLocation: { lat: latitude, lng: longitude },
     });
-    
-    console.log('Trip started:', data.trip.id);
+
+    console.log("Trip started:", data.trip.id);
     return data.trip;
   } catch (error) {
-    console.error('Failed to start trip:', error.response?.data);
+    console.error("Failed to start trip:", error.response?.data);
   }
 };
 
 // Create incident
 const logIncident = async (tripId, type, location, speed) => {
   try {
-    const { data } = await apiClient.post('/incidents', {
+    const { data } = await apiClient.post("/incidents", {
       tripId,
       type,
-      severity: 'medium',
+      severity: "medium",
       timestamp: new Date().toISOString(),
       location,
       speed,
-      details: { reason: type === 'distraction' ? 'phone' : null }
+      details: { reason: type === "distraction" ? "phone" : null },
     });
-    
-    console.log('Incident logged:', data.incident.id);
+
+    console.log("Incident logged:", data.incident.id);
   } catch (error) {
-    console.error('Failed to log incident:', error.response?.data);
+    console.error("Failed to log incident:", error.response?.data);
   }
 };
 ```
@@ -371,12 +390,14 @@ JWT_EXPIRY=72h  # 3 days
 ### Finding Your Local IP
 
 **Windows:**
+
 ```bash
 ipconfig
 # Look for IPv4 Address under your active network adapter
 ```
 
 **macOS/Linux:**
+
 ```bash
 ifconfig
 # or
@@ -432,6 +453,7 @@ tools/mock-server/
 ## Support
 
 For issues or questions:
+
 - Check the [main project README](../../README.md)
 - Review [API specification](../../docs/api/openapi.yaml)
 - Contact the SafeDrive AI team
