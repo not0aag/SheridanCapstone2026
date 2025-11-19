@@ -68,7 +68,7 @@ sequenceDiagram
     MS->>DB: Store user (bcrypt password)
     DB-->>MS: User created
     MS-->>M: 201 {access_token, expires_in}
-    
+
     M->>MS: POST /auth/login
     MS->>DB: Verify credentials
     DB-->>MS: User found
@@ -109,14 +109,14 @@ sequenceDiagram
 
 **Key Differences from Production:**
 
-| Component | Mock Server (Phase 1) | Production (Future) |
-|-----------|------------------------|---------------------|
-| **Database** | In-memory Maps (cleared on restart) | PostgreSQL with persistent storage |
-| **Video Storage** | Simulated pre-signed URLs (no actual upload) | AWS S3 with chunked uploads |
-| **Authentication** | JWT with bcrypt (same as production) | Same, but with token refresh |
-| **Incidents** | Stored in memory | Persisted to DB + triggers notifications |
-| **Delays** | Configurable via `RESPONSE_DELAY_MS` | Network latency (CDN/edge) |
-| **Error Simulation** | `ENABLE_ERROR_SIMULATION=true` | Real error handling + monitoring |
+| Component            | Mock Server (Phase 1)                        | Production (Future)                      |
+| -------------------- | -------------------------------------------- | ---------------------------------------- |
+| **Database**         | In-memory Maps (cleared on restart)          | PostgreSQL with persistent storage       |
+| **Video Storage**    | Simulated pre-signed URLs (no actual upload) | AWS S3 with chunked uploads              |
+| **Authentication**   | JWT with bcrypt (same as production)         | Same, but with token refresh             |
+| **Incidents**        | Stored in memory                             | Persisted to DB + triggers notifications |
+| **Delays**           | Configurable via `RESPONSE_DELAY_MS`         | Network latency (CDN/edge)               |
+| **Error Simulation** | `ENABLE_ERROR_SIMULATION=true`               | Real error handling + monitoring         |
 
 **Mock Server Endpoints:**
 
@@ -137,6 +137,7 @@ sequenceDiagram
 **Data Seeding:**
 
 Mock server initializes with:
+
 - 3 demo users (demo1@example.com, demo2@example.com, demo3@example.com)
 - 10 sample trips (5 active, 5 completed)
 - 25+ incidents (distraction, drowsiness, crash)

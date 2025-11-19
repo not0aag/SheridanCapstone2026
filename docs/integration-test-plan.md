@@ -13,6 +13,7 @@ This document outlines the integration testing strategy for SafeDrive AI Phase 1
 ## Scope
 
 ### In Scope
+
 - Mobile ↔ Mock API Server integration
 - Auth flow (register → login → authenticated requests)
 - Trip lifecycle (start → log incidents → stop)
@@ -21,6 +22,7 @@ This document outlines the integration testing strategy for SafeDrive AI Phase 1
 - Error handling and retry logic
 
 ### Out of Scope (Future Phases)
+
 - Production backend integration
 - S3 video storage (mock server simulates this)
 - PostgreSQL database integration
@@ -31,6 +33,7 @@ This document outlines the integration testing strategy for SafeDrive AI Phase 1
 ## Test Strategy
 
 ### 1. API Integration Tests
+
 **Tool:** Jest + Supertest  
 **Location:** `tests/integration/api/`
 
@@ -41,6 +44,7 @@ This document outlines the integration testing strategy for SafeDrive AI Phase 1
 - Video upload simulation
 
 ### 2. Mobile Integration Tests
+
 **Tool:** Detox (React Native E2E)  
 **Location:** `mobile/e2e/`
 
@@ -51,6 +55,7 @@ This document outlines the integration testing strategy for SafeDrive AI Phase 1
 - Offline mode and data sync
 
 ### 3. Mock Server Contract Tests
+
 **Tool:** Pact or OpenAPI validation  
 **Location:** `tests/contract/`
 
@@ -63,6 +68,7 @@ This document outlines the integration testing strategy for SafeDrive AI Phase 1
 ## Test Environment
 
 ### Mock Server Setup
+
 ```bash
 cd tools/mock-server
 npm install
@@ -70,6 +76,7 @@ npm run dev  # Starts on port 3000
 ```
 
 ### Mobile App (Android Emulator)
+
 ```bash
 cd mobile
 npm install
@@ -77,6 +84,7 @@ npm run android
 ```
 
 ### Test Data
+
 - Use mock server seed data (3 users, 10 trips, 25 incidents)
 - Reset via `POST /debug/reset` between test suites
 
@@ -85,12 +93,14 @@ npm run android
 ## Test Scenarios
 
 ### Scenario 1: New User Registration
+
 1. Mobile app sends POST `/auth/register`
 2. Verify 201 response with JWT token
 3. Use token to access GET `/users/me`
 4. Verify user profile returned
 
 ### Scenario 2: Complete Trip Flow
+
 1. Authenticate user
 2. Start trip: POST `/trips/start`
 3. Log incident: POST `/incidents` (with trip_id)
@@ -99,12 +109,14 @@ npm run android
 6. Fetch incidents: GET `/incidents/trip/{tripId}`
 
 ### Scenario 3: Video Upload Workflow
+
 1. Request upload URL: POST `/videos/upload`
 2. Verify presigned URLs returned
 3. Simulate chunk upload (not tested in mock)
 4. Fetch video metadata: GET `/videos/{videoId}`
 
 ### Scenario 4: Offline Mode
+
 1. Start trip while online
 2. Disable network (airplane mode)
 3. Log incidents (queued locally)
@@ -112,6 +124,7 @@ npm run android
 5. Verify incidents sync to server
 
 ### Scenario 5: ML Model Integration
+
 1. Load MediaPipe FaceMesh on app start
 2. Process camera frame
 3. Detect drowsiness (PERCLOS < threshold)
@@ -132,11 +145,11 @@ npm run android
 
 ## Timeline
 
-| Phase | Tasks | Target |
-|-------|-------|--------|
+| Phase      | Tasks                                               | Target |
+| ---------- | --------------------------------------------------- | ------ |
 | **Week 2** | Setup Jest + Supertest, write API integration tests | Nov 25 |
-| **Week 3** | Setup Detox, write mobile E2E tests | Dec 2 |
-| **Week 4** | Contract tests, CI integration | Dec 9 |
+| **Week 3** | Setup Detox, write mobile E2E tests                 | Dec 2  |
+| **Week 4** | Contract tests, CI integration                      | Dec 9  |
 
 ---
 
@@ -145,11 +158,13 @@ npm run android
 ❌ **Not Started** — Intentionally deferred to allow core infrastructure completion.
 
 **Rationale:**
+
 - Mock server and CI/CD pipelines needed first
 - Mobile app foundation required before E2E tests
 - ML model integration still in POC phase
 
 **Next Actions:**
+
 1. Complete mobile app camera integration (Week 2)
 2. Finalize ML model deployment strategy
 3. Setup Jest/Detox test environments
