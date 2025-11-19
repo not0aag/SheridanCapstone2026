@@ -1,0 +1,36 @@
+{
+    "name": "safedrive-mock-api-server",
+    "version": "1.0.0",
+    "description": "Mock API server for SafeDrive AI mobile development and testing",
+    "type": "module",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node --watch server.js",
+        "reset": "curl -X POST http://localhost:3001/debug/reset"
+    },
+    "keywords": [
+        "mock",
+        "api",
+        "safedrive",
+        "express"
+    ],
+    "author": "SafeDrive AI Team",
+    "license": "MIT",
+    "dependencies": {
+        "express": "^4.18.2",
+        "cors": "^2.8.5",
+        "jsonwebtoken": "^9.0.2",
+        "bcrypt": "^5.1.1",
+        "@faker-js/faker": "^8.3.1",
+        "multer": "^1.4.5-lts.1",
+        "express-validator": "^7.0.1",
+        "morgan": "^1.10.0",
+        "dotenv": "^16.3.1",
+        "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+        "@types/express": "^4.17.21",
+        "@types/node": "^20.10.0"
+    }
+}
