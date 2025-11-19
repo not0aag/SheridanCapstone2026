@@ -10,8 +10,13 @@ class S3Handler:
         self.use_s3 = getattr(settings, 'USE_S3', False)
         
         if self.use_s3:
-            self.s3_client = boto3.client('s3')
-            self.bucket_name = getattr(settings, 'S3_BUCKET_NAME', 'safedrive-videos-dev')
+            self.s3_client = boto3.client(
+                's3',
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                region_name=settings.AWS_REGION
+            )
+            self.bucket_name = settings.S3_BUCKET_NAME
         else:
             # Use local storage for development
             self.local_storage_path = './videos'
