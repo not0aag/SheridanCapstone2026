@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 import hashlib
 from app.database import get_db
 from app.models.user import User
+from app.auth import create_access_token, get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -34,6 +35,11 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
+
 # Register endpoint
 @router.post("/register", response_model=UserResponse, status_code=201)
 def register_user(user_data: UserRegister, db: Session = Depends(get_db)):
@@ -59,8 +65,8 @@ def register_user(user_data: UserRegister, db: Session = Depends(get_db)):
     
     return new_user
 
-# Login endpoint
-@router.post("/login")
+# Login endpoint - NOW RETURNS JWT TOKEN
+@router.post("/login", response_model=TokenResponse)
 def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     # Find user by email
     user = db.query(User).filter(User.email == credentials.email).first()
@@ -68,21 +74,21 @@ def login_user(credentials: UserLogin, db: Session = Depends(get_db)):
     if not user or not verify_password(credentials.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
+    # Create JWT token
+    access_token = create_access_token(data={"user_id": user.id})
+    
     return {
-        "message": "Login successful",
+        "access_token": access_token,
+        "token_type": "bearer",
         "user": {
             "id": user.id,
             "email": user.email,
-            "full_name": user.full_name
+            "full_name": user.full_name,
+            "phone_number": user.phone_number
         }
     }
 
-# Get profile endpoint
-@router.get("/profile/{user_id}", response_model=UserResponse)
-def get_user_profile(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return user
+# Get profile endpoint - NOW REQUIRES AUTHENTICATION
+@router.get("/profile", response_model=UserResponse)
+def get_user_profile(current_user: User = Depends(get_current_user)):
+    return current_user
