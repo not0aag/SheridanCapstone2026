@@ -12,7 +12,7 @@
     "dependencies": {
         "react": "18.2.0",
         "react-native": "0.73.0",
-        "react-native-vision-camera": "^3.6.0",
+        "react-native-vision-camera": "^4.7.3",
         "react-native-sensors": "^7.3.6",
         "react-native-geolocation-service": "^5.3.1",
         "react-native-fs": "^2.20.0",
