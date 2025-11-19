@@ -19,6 +19,7 @@ datasets/
 /models/
 /logs/
 
+<<<<<<< Updated upstream
 # ===================================
 # CI/CD and Build Artifacts
 # ===================================
@@ -109,3 +110,44 @@ tests/integration/node_modules/
 tests/integration/.env.test
 tests/integration/coverage/
 tests/integration/output_*.ipynb
+=======
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environment
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment variables - CRITICAL: Never commit credentials!
+.env
+.env.local
+*.env
+
+# OS
+Thumbs.db
+
+# Testing
+.pytest_cache/
+
+# Database
+*.db
+*.sqlite3
+
+# Videos (local storage)
+videos/
+
+# AWS credentials
+*.csv
+aws_credentials.csv
+*.pem
+*.key
+ 
+>>>>>>> Stashed changes
