@@ -133,7 +133,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload Debug APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: app-debug
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
@@ -188,7 +188,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
 
       - name: Upload iOS build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: ios-build
           path: mobile/ios/build/Build/Products/Debug-iphonesimulator/SafeDriveAI.app
