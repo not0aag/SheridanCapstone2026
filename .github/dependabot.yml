@@ -1,0 +1,117 @@
+version: 2
+
+updates:
+  # Mobile app dependencies (npm)
+  - package-ecosystem: "npm"
+    directory: "/mobile"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "not0aag"
+    labels:
+      - "dependencies"
+      - "mobile"
+    commit-message:
+      prefix: "chore(mobile)"
+      include: "scope"
+    groups:
+      react-native:
+        patterns:
+          - "react*"
+          - "@react-*"
+      testing:
+        patterns:
+          - "jest*"
+          - "@testing-library/*"
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Backend dependencies (pip)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "not0aag"
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "chore(backend)"
+      include: "scope"
+    groups:
+      fastapi:
+        patterns:
+          - "fastapi*"
+          - "pydantic*"
+          - "uvicorn*"
+      database:
+        patterns:
+          - "sqlalchemy*"
+          - "alembic*"
+          - "psycopg*"
+      testing:
+        patterns:
+          - "pytest*"
+
+  # ML dependencies (pip)
+  - package-ecosystem: "pip"
+    directory: "/ml"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "not0aag"
+    labels:
+      - "dependencies"
+      - "ml"
+    commit-message:
+      prefix: "chore(ml)"
+      include: "scope"
+    groups:
+      tensorflow:
+        patterns:
+          - "tensorflow*"
+      ml-tools:
+        patterns:
+          - "mediapipe*"
+          - "opencv*"
+          - "numpy*"
+
+  # Mock server dependencies (npm)
+  - package-ecosystem: "npm"
+    directory: "/tools/mock-server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "tools"
+    commit-message:
+      prefix: "chore(tools)"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "ci-cd"
+    commit-message:
+      prefix: "chore(ci)"

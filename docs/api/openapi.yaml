@@ -1,0 +1,1009 @@
+openapi: 3.0.3
+info:
+  title: SafeDrive AI API
+  version: 1.0.0
+  description: |
+    Complete API specification for SafeDrive AI - an intelligent smartphone-based driver safety system.
+
+    ## Features
+    - JWT-based authentication
+    - Real-time trip tracking
+    - Incident logging (distraction, drowsiness, crash)
+    - Video upload with pre-signed S3 URLs
+    - User profile management
+    - Trip analytics and safety scoring
+
+    ## Authentication
+    Most endpoints require Bearer token authentication. Obtain a token via `/auth/login` or `/auth/register`.
+
+    ## Rate Limiting
+    - Anonymous: 100 requests/hour
+    - Authenticated: 1000 requests/hour
+
+  contact:
+    name: SafeDrive AI Team
+    email: support@safedriveai.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Development
+  - url: https://api.safedriveai.com
+    description: Production
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Auth
+    description: Authentication and registration
+  - name: Users
+    description: User profile management
+  - name: Trips
+    description: Trip tracking and management
+  - name: Incidents
+    description: Safety incident logging
+  - name: Videos
+    description: Video upload and retrieval
+  - name: Health
+    description: API health checks
+
+paths:
+  # ============================================================
+  # AUTHENTICATION
+  # ============================================================
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Create a new user account with email and password
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+            examples:
+              newUser:
+                summary: New user registration
+                value:
+                  email: "driver@example.com"
+                  password: "SecurePass123!"
+                  name: "John Doe"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              examples:
+                userCreated:
+                  summary: User created
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    email: "driver@example.com"
+                    name: "John Doe"
+                    created_at: "2025-11-19T10:30:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                emailExists:
+                  value:
+                    message: "Email already registered"
+                    code: "EMAIL_EXISTS"
+
+  /auth/login:
+    post:
+      summary: Login and receive JWT token
+      description: Authenticate with email and password to receive an access token
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+            examples:
+              validLogin:
+                summary: Valid credentials
+                value:
+                  email: "driver@example.com"
+                  password: "SecurePass123!"
+      responses:
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Token"
+              examples:
+                tokenResponse:
+                  summary: JWT token
+                  value:
+                    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    token_type: "Bearer"
+                    expires_in: 86400
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  # USERS
+  # ============================================================
+  /users/profile:
+    get:
+      summary: Get current user profile
+      description: Retrieve profile information for the authenticated user
+      tags: [Users]
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+              examples:
+                userProfile:
+                  summary: Complete user profile
+                  value:
+                    id: "550e8400-e29b-41d4-a716-446655440000"
+                    email: "driver@example.com"
+                    name: "John Doe"
+                    emergency_contact: "+1-555-0123"
+                    created_at: "2025-11-01T10:00:00Z"
+                    total_trips: 42
+                    safety_score: 87
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    put:
+      summary: Update user profile
+      description: Update name and emergency contact for authenticated user
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+            examples:
+              updateProfile:
+                summary: Update profile
+                value:
+                  name: "John A. Doe"
+                  emergency_contact: "+1-555-9999"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  # TRIPS
+  # ============================================================
+  /trips/start:
+    post:
+      summary: Start a new trip
+      description: Begin tracking a new trip with starting location
+      tags: [Trips]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TripCreate"
+            examples:
+              startTrip:
+                summary: Start trip
+                value:
+                  start_location:
+                    lat: 43.6532
+                    lng: -79.3832
+      responses:
+        "201":
+          description: Trip started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripStartResponse"
+              examples:
+                tripStarted:
+                  summary: Trip started
+                  value:
+                    trip_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    started_at: "2025-11-19T14:30:00Z"
+                    status: "active"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /trips/{trip_id}/stop:
+    post:
+      summary: Stop an active trip
+      description: End the specified trip and generate summary statistics
+      tags: [Trips]
+      parameters:
+        - in: path
+          name: trip_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Trip ID to stop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TripStopRequest"
+            examples:
+              stopTrip:
+                summary: Stop trip
+                value:
+                  end_location:
+                    lat: 43.7532
+                    lng: -79.4832
+      responses:
+        "200":
+          description: Trip stopped successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripSummary"
+              examples:
+                tripSummary:
+                  summary: Trip summary
+                  value:
+                    trip_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    started_at: "2025-11-19T14:30:00Z"
+                    ended_at: "2025-11-19T15:15:00Z"
+                    duration_minutes: 45
+                    distance_km: 32.5
+                    incidents_count: 2
+                    safety_score: 92
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /trips:
+    get:
+      summary: List user's trips
+      description: Retrieve paginated list of trips with optional date filtering
+      tags: [Trips]
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Maximum number of trips to return
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of trips to skip
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date-time
+          description: Filter trips starting after this date
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date-time
+          description: Filter trips starting before this date
+      responses:
+        "200":
+          description: List of trips
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TripSummary"
+              examples:
+                tripList:
+                  summary: User trips
+                  value:
+                    - trip_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      started_at: "2025-11-19T14:30:00Z"
+                      ended_at: "2025-11-19T15:15:00Z"
+                      duration_minutes: 45
+                      distance_km: 32.5
+                      incidents_count: 2
+                      safety_score: 92
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /trips/{trip_id}:
+    get:
+      summary: Get detailed trip information
+      description: Retrieve complete trip details including all incidents and videos
+      tags: [Trips]
+      parameters:
+        - in: path
+          name: trip_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Trip ID
+      responses:
+        "200":
+          description: Detailed trip information
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TripDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  # INCIDENTS
+  # ============================================================
+  /incidents:
+    post:
+      summary: Log a safety incident
+      description: Record a distraction, drowsiness, or crash event during a trip
+      tags: [Incidents]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncidentCreate"
+            examples:
+              distractionIncident:
+                summary: Phone distraction
+                value:
+                  trip_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  type: "distraction"
+                  severity: "medium"
+                  confidence: 0.94
+                  timestamp: "2025-11-19T14:45:00Z"
+                  location:
+                    lat: 43.6732
+                    lng: -79.4032
+              drowsinessIncident:
+                summary: Drowsiness detected
+                value:
+                  trip_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  type: "drowsiness"
+                  severity: "high"
+                  confidence: 0.87
+                  timestamp: "2025-11-19T14:55:00Z"
+                  location:
+                    lat: 43.6832
+                    lng: -79.4132
+      responses:
+        "201":
+          description: Incident logged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+              examples:
+                incidentCreated:
+                  summary: Incident created
+                  value:
+                    id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    trip_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    type: "distraction"
+                    severity: "medium"
+                    confidence: 0.94
+                    timestamp: "2025-11-19T14:45:00Z"
+                    location:
+                      lat: 43.6732
+                      lng: -79.4032
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /incidents/trip/{trip_id}:
+    get:
+      summary: Get incidents for a specific trip
+      description: Retrieve all incidents that occurred during a trip
+      tags: [Incidents]
+      parameters:
+        - in: path
+          name: trip_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Trip ID
+      responses:
+        "200":
+          description: List of incidents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Incident"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  # VIDEOS
+  # ============================================================
+  /videos/upload:
+    post:
+      summary: Initialize video upload
+      description: Request pre-signed URLs for multipart video upload to S3
+      tags: [Videos]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/VideoUploadRequest"
+            examples:
+              videoUpload:
+                summary: Upload metadata
+                value:
+                  trip_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  incident_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+      responses:
+        "201":
+          description: Upload initialized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoUploadResponse"
+              examples:
+                uploadResponse:
+                  summary: Pre-signed URLs
+                  value:
+                    video_id: "a1b2c3d4-5678-90ab-cdef-1234567890ab"
+                    upload_url: "https://s3.amazonaws.com/safedrive-videos/..."
+                    status: "pending"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /videos/{video_id}:
+    get:
+      summary: Get video metadata
+      description: Retrieve video metadata and pre-signed download URL
+      tags: [Videos]
+      parameters:
+        - in: path
+          name: video_id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Video ID
+      responses:
+        "200":
+          description: Video metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Video"
+              examples:
+                videoMetadata:
+                  summary: Video details
+                  value:
+                    id: "a1b2c3d4-5678-90ab-cdef-1234567890ab"
+                    trip_id: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    incident_id: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+                    download_url: "https://s3.amazonaws.com/safedrive-videos/..."
+                    duration_seconds: 30
+                    size_bytes: 15728640
+                    created_at: "2025-11-19T14:45:30Z"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  # HEALTH
+  # ============================================================
+  /health:
+    get:
+      summary: Health check
+      description: Check API health and version
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+              examples:
+                healthy:
+                  summary: Healthy status
+                  value:
+                    status: "healthy"
+                    version: "1.0.0"
+                    timestamp: "2025-11-19T10:30:00Z"
+
+# ============================================================
+# COMPONENTS
+# ============================================================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from `/auth/login` or `/auth/register`
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            validationError:
+              summary: Validation failed
+              value:
+                message: "Invalid email format"
+                code: "VALIDATION_ERROR"
+
+    Unauthorized:
+      description: Unauthorized - Missing or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            noToken:
+              summary: No auth token
+              value:
+                message: "Authorization header missing"
+                code: "UNAUTHORIZED"
+
+    NotFound:
+      description: Not Found - Resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            resourceNotFound:
+              summary: Resource not found
+              value:
+                message: "Trip not found"
+                code: "NOT_FOUND"
+
+  schemas:
+    # ============================================================
+    # AUTH SCHEMAS
+    # ============================================================
+    UserCreate:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+          format: email
+          description: User's email address (must be unique)
+          example: "driver@example.com"
+        password:
+          type: string
+          minLength: 8
+          format: password
+          description: User's password (minimum 8 characters)
+          example: "SecurePass123!"
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: User's full name
+          example: "John Doe"
+
+    UserLogin:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          description: Registered email address
+          example: "driver@example.com"
+        password:
+          type: string
+          format: password
+          description: User's password
+          example: "SecurePass123!"
+
+    Token:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          enum: [Bearer]
+          description: Token type (always Bearer)
+          example: "Bearer"
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds (24 hours = 86400)
+          example: 86400
+
+    # ============================================================
+    # USER SCHEMAS
+    # ============================================================
+    User:
+      type: object
+      required: [id, email, name, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique user identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "driver@example.com"
+        name:
+          type: string
+          description: User's full name
+          example: "John Doe"
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2025-11-01T10:00:00Z"
+
+    UserProfile:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            emergency_contact:
+              type: string
+              nullable: true
+              description: Emergency contact phone number
+              example: "+1-555-0123"
+            total_trips:
+              type: integer
+              description: Total number of trips completed
+              example: 42
+            safety_score:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Overall safety score (0-100)
+              example: 87
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Updated full name
+          example: "John A. Doe"
+        emergency_contact:
+          type: string
+          pattern: '^\+?[1-9]\d{1,14}$'
+          description: Emergency contact phone number (E.164 format)
+          example: "+1-555-9999"
+
+    # ============================================================
+    # TRIP SCHEMAS
+    # ============================================================
+    TripCreate:
+      type: object
+      required: [start_location]
+      properties:
+        start_location:
+          $ref: "#/components/schemas/Location"
+
+    TripStartResponse:
+      type: object
+      required: [trip_id, started_at, status]
+      properties:
+        trip_id:
+          type: string
+          format: uuid
+          description: Unique trip identifier
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        started_at:
+          type: string
+          format: date-time
+          description: Trip start timestamp
+          example: "2025-11-19T14:30:00Z"
+        status:
+          type: string
+          enum: [active]
+          description: Trip status (always 'active' on start)
+          example: "active"
+
+    TripStopRequest:
+      type: object
+      required: [end_location]
+      properties:
+        end_location:
+          $ref: "#/components/schemas/Location"
+
+    TripSummary:
+      type: object
+      required:
+        [
+          trip_id,
+          started_at,
+          ended_at,
+          duration_minutes,
+          distance_km,
+          incidents_count,
+          safety_score,
+        ]
+      properties:
+        trip_id:
+          type: string
+          format: uuid
+          description: Unique trip identifier
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        started_at:
+          type: string
+          format: date-time
+          description: Trip start timestamp
+          example: "2025-11-19T14:30:00Z"
+        ended_at:
+          type: string
+          format: date-time
+          description: Trip end timestamp
+          example: "2025-11-19T15:15:00Z"
+        duration_minutes:
+          type: integer
+          description: Trip duration in minutes
+          example: 45
+        distance_km:
+          type: number
+          format: float
+          description: Total distance traveled in kilometers
+          example: 32.5
+        incidents_count:
+          type: integer
+          description: Total number of incidents during trip
+          example: 2
+        safety_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Trip safety score (0-100, higher is better)
+          example: 92
+
+    TripDetail:
+      allOf:
+        - $ref: "#/components/schemas/TripSummary"
+        - type: object
+          properties:
+            start_location:
+              $ref: "#/components/schemas/Location"
+            end_location:
+              $ref: "#/components/schemas/Location"
+            incidents:
+              type: array
+              items:
+                $ref: "#/components/schemas/Incident"
+              description: All incidents that occurred during trip
+            videos:
+              type: array
+              items:
+                $ref: "#/components/schemas/Video"
+              description: All videos recorded during trip
+
+    # ============================================================
+    # INCIDENT SCHEMAS
+    # ============================================================
+    IncidentCreate:
+      type: object
+      required: [trip_id, type, severity, confidence, timestamp, location]
+      properties:
+        trip_id:
+          type: string
+          format: uuid
+          description: ID of trip when incident occurred
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        type:
+          type: string
+          enum: [distraction, drowsiness, crash]
+          description: Type of safety incident
+          example: "distraction"
+        severity:
+          type: string
+          enum: [low, medium, high]
+          description: Severity level of incident
+          example: "medium"
+        confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: ML model confidence score (0.0-1.0)
+          example: 0.94
+        timestamp:
+          type: string
+          format: date-time
+          description: When incident was detected
+          example: "2025-11-19T14:45:00Z"
+        location:
+          $ref: "#/components/schemas/Location"
+
+    Incident:
+      allOf:
+        - $ref: "#/components/schemas/IncidentCreate"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Unique incident identifier
+              example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+
+    # ============================================================
+    # VIDEO SCHEMAS
+    # ============================================================
+    VideoUploadRequest:
+      type: object
+      required: [trip_id]
+      properties:
+        trip_id:
+          type: string
+          format: uuid
+          description: ID of trip for this video
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        incident_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional incident ID if video relates to specific incident
+          example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        video:
+          type: string
+          format: binary
+          description: Video file (H.264 encoded, max 100MB)
+
+    VideoUploadResponse:
+      type: object
+      required: [video_id, upload_url, status]
+      properties:
+        video_id:
+          type: string
+          format: uuid
+          description: Unique video identifier
+          example: "a1b2c3d4-5678-90ab-cdef-1234567890ab"
+        upload_url:
+          type: string
+          format: uri
+          description: Pre-signed S3 URL for video upload
+          example: "https://s3.amazonaws.com/safedrive-videos/..."
+        status:
+          type: string
+          enum: [pending, uploaded, processing, ready]
+          description: Video upload/processing status
+          example: "pending"
+
+    Video:
+      type: object
+      required:
+        [id, trip_id, download_url, duration_seconds, size_bytes, created_at]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique video identifier
+          example: "a1b2c3d4-5678-90ab-cdef-1234567890ab"
+        trip_id:
+          type: string
+          format: uuid
+          description: Trip ID this video belongs to
+          example: "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        incident_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Optional incident ID if video captures specific incident
+          example: "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+        download_url:
+          type: string
+          format: uri
+          description: Pre-signed S3 URL for video download (expires in 1 hour)
+          example: "https://s3.amazonaws.com/safedrive-videos/..."
+        duration_seconds:
+          type: integer
+          description: Video duration in seconds
+          example: 30
+        size_bytes:
+          type: integer
+          description: Video file size in bytes
+          example: 15728640
+        created_at:
+          type: string
+          format: date-time
+          description: When video was uploaded
+          example: "2025-11-19T14:45:30Z"
+
+    # ============================================================
+    # COMMON SCHEMAS
+    # ============================================================
+    Location:
+      type: object
+      required: [lat, lng]
+      properties:
+        lat:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Latitude in decimal degrees
+          example: 43.6532
+        lng:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Longitude in decimal degrees
+          example: -79.3832
+
+    Error:
+      type: object
+      required: [message, code]
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Invalid email format"
+        code:
+          type: string
+          description: Machine-readable error code
+          example: "VALIDATION_ERROR"
+
+    Health:
+      type: object
+      required: [status, version, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: API health status
+          example: "healthy"
+        version:
+          type: string
+          description: API version
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: Current server timestamp
+          example: "2025-11-19T10:30:00Z"
