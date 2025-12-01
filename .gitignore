@@ -109,3 +109,18 @@ tests/integration/node_modules/
 tests/integration/.env.test
 tests/integration/coverage/
 tests/integration/output_*.ipynb
+
+# Sukhman's Android specific ignores
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+/build
+/captures
+.externalNativeBuild
+.cxx
