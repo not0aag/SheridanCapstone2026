@@ -1,0 +1,63 @@
+{
+  "model_name": "SafeDrive AI Distraction Classifier",
+  "model_version": "1.0.0",
+  "model_architecture": "MobileNetV2",
+  "input_shape": [
+    1,
+    224,
+    224,
+    3
+  ],
+  "input_dtype": "<class 'numpy.float32'>",
+  "output_shape": [
+    1,
+    10
+  ],
+  "output_dtype": "<class 'numpy.float32'>",
+  "num_classes": 10,
+  "class_labels": {
+    "c0": "Safe driving",
+    "c1": "Texting - right hand",
+    "c2": "Talking on phone - right hand",
+    "c3": "Texting - left hand",
+    "c4": "Talking on phone - left hand",
+    "c5": "Operating radio",
+    "c6": "Drinking",
+    "c7": "Reaching behind",
+    "c8": "Hair and makeup",
+    "c9": "Talking to passenger"
+  },
+  "preprocessing": {
+    "resize": "224x224",
+    "normalization": "Divide by 255.0 to get [0, 1] range",
+    "color_space": "RGB"
+  },
+  "quantization": {
+    "type": "Dynamic Range (Float16)",
+    "input_range": [
+      0.0,
+      1.0
+    ],
+    "output_range": [
+      0.0,
+      1.0
+    ],
+    "weights": "int8",
+    "activations": "float32"
+  },
+  "performance": {
+    "keras_model_size_mb": 25.83,
+    "tflite_model_size_mb": 2.4,
+    "size_reduction_percent": 90.7,
+    "tflite_accuracy_percent": 23.8,
+    "accuracy_difference_percent": 61.08,
+    "validation_status": "WARNING"
+  },
+  "training_info": {
+    "dataset": "State Farm Distracted Driver Detection",
+    "training_samples": 17779,
+    "validation_samples": 4645,
+    "epochs": 30,
+    "final_accuracy": 84.88
+  }
+}

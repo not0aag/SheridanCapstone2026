@@ -1,0 +1,23 @@
+{
+	"model_name": "SafeDrive MobileNetV2 Distraction Classifier",
+	"version": "1.0",
+	"input_shape": [1, 224, 224, 3],
+	"input_type": "uint8",
+	"output_shape": [1, 10],
+	"output_type": "uint8",
+	"classes": [
+		"c0_safe",
+		"c1_texting_right",
+		"c2_phone_right",
+		"c3_texting_left",
+		"c4_phone_left",
+		"c5_radio",
+		"c6_drinking",
+		"c7_reaching_behind",
+		"c8_hair_makeup",
+		"c9_talking_passenger"
+	],
+	"preprocessing": "MobileNetV2: scale RGB [0,255] to [-1,1], then quantize to uint8",
+	"accuracy": "~90% (driver-based validation)",
+	"inference_time": "~20ms on MacBook M4, ~30-40ms on Pixel 5"
+}

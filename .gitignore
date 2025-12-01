@@ -19,6 +19,7 @@ backend/instance/
 .idea/
 *.iml
 .DS_Store
+.claude/
 
 # ===================================
 # Secrets & Credentials (CRITICAL)
@@ -65,6 +66,8 @@ tests/integration/output_*.ipynb
 # ML Artifacts
 /models/
 /logs/
+*.pyc
+*.pyo
 
 # ===================================
 # Mobile (React Native / Android / iOS)

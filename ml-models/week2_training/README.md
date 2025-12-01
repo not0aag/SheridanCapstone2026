@@ -1,19 +1,38 @@
 # Week 2: Distraction Detection Model
 
-## Deliverables
-- MobileNetV2 distraction classifier: 84.88% validation accuracy
-- TFLite model: 2.40MB (90.7% size reduction)
-- Delivered to Sukh for Android integration
+## Results
+- **Validation Accuracy:** 84.88% (driver-based split)
+- **Target:** 92%+ (Week 3 fine-tuning)
+- **Keras Model:** 25.8MB
+- **TFLite Model:** 2.4MB (90.7% reduction)
+- **Training Time:** ~3 hours (M4 Pro + Metal)
 
 ## Files
-- `train_mobilenetv2.py` - Training script
-- `convert_to_tflite.py` - TFLite conversion
-- `config.py` - Configuration
-- `models/` - Trained models
-  - `mobilenetv2_final.keras` (25.8MB)
-  - `distraction_model.tflite` (2.40MB)
+```
+week2_training/
+├── *.py                  # Training & conversion scripts
+├── models/
+│   └── mobilenetv2_final.h5       # Final Keras model (25.8MB)
+└── tflite_models/
+    ├── mobilenetv2_distraction_classifier.tflite  # (2.4MB)
+    ├── model_metadata.json                        # Model specs
+    └── INTEGRATION_GUIDE.md                       # For Sukh
+```
 
-## Performance
-- Validation Accuracy: 84.88%
-- Target: 92%+ (Week 3 fine-tuning)
-- Driver-based split (20 train/6 val)
+## Usage
+```bash
+# Train model
+python train_mobilenetv2.py
+
+# Convert to TFLite  
+python convert_to_tflite.py
+
+# Evaluate
+python evaluate_model.py
+```
+
+## Status
+- ✅ Model trained (84.88% accuracy)
+- ✅ TFLite converted (2.4MB)
+- ✅ Delivered to Sukh for Android integration
+- ⏳ Week 3: Fine-tune to 92%+
