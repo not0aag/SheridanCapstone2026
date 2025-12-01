@@ -1,153 +1,121 @@
-# Python environment files
+# ===================================
+# Python & Environment
+# ===================================
 *.pyc
 __pycache__/
 venv/
+.venv/
+env/
+ENV/
 safedrive_ml_env/
+backend/venv/
+backend/.venv/
+backend/instance/
 
-# Data files/Downloads - Keep the repo lean
-*.zip
-*.tar.gz
-datasets/
-
-# MacOS files
+# ===================================
+# IDE & Editor
+# ===================================
+.vscode/
+.idea/
+*.iml
 .DS_Store
 
-# Jupyter Notebook files
-.ipynb_checkpoints
-
-# ML checkpoints
-/models/
-/logs/
-
-<<<<<<< Updated upstream
 # ===================================
-# CI/CD and Build Artifacts
+# Secrets & Credentials (CRITICAL)
 # ===================================
+.env
+.env.local
+.env.test
+*.env
+backend/.env
+tools/mock-server/.env
+aws_credentials.csv
+*.pem
+*.key
 
-# Test coverage reports
-coverage/
-*.coverage
-htmlcov/
-.coverage
-coverage.xml
-.pytest_cache/
-
-# Build outputs
+# ===================================
+# Data & Logs
+# ===================================
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+backend/bandit-report.json
+coverage/
+*.coverage
+htmlcov/
+coverage.xml
+.pytest_cache/
+backend/.pytest_cache/
+backend/.mypy_cache/
+backend/htmlcov/
+
+# Data files
+*.zip
+*.tar.gz
+datasets/
+videos/
+*.db
+*.sqlite3
+
+# Jupyter
+.ipynb_checkpoints
+tests/integration/output_*.ipynb
+
+# ML Artifacts
+/models/
+/logs/
 
 # ===================================
-# Mock Server
+# Mobile (React Native / Android / iOS)
 # ===================================
 
-# Mock server environment
-tools/mock-server/.env
-tools/mock-server/node_modules/
-tools/mock-server/uploads/
-
-# ===================================
-# Mobile App
-# ===================================
-
-# React Native
+# Dependencies
 mobile/node_modules/
+mobile/ios/Pods/
+
+# Build Outputs
 mobile/.expo/
 mobile/.expo-shared/
 mobile/dist/
-mobile/npm-debug.*
+mobile/web-build/
+mobile/android/build/
+mobile/android/app/build/
+mobile/ios/build/
+mobile/ios/DerivedData/
+
+# Android Specific
+mobile/android/.gradle/
+mobile/android/captures/
+mobile/android/.externalNativeBuild
+mobile/android/.cxx
+mobile/android/local.properties
+/local.properties
+.gradle
+/build
+/captures
+.externalNativeBuild
+.cxx
+
+# iOS Specific
+mobile/ios/*.xcworkspace
+mobile/ios/*.xcuserdata
+
+# Binary Artifacts
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.dSYM
 mobile/*.jks
 mobile/*.p8
 mobile/*.p12
 mobile/*.key
 mobile/*.mobileprovision
-mobile/*.orig.*
-mobile/web-build/
-
-# Android
-mobile/android/.gradle/
-mobile/android/build/
-mobile/android/app/build/
-mobile/android/captures/
-mobile/android/.externalNativeBuild
-mobile/android/.cxx
-mobile/android/local.properties
-*.apk
-*.aab
-
-# iOS
-mobile/ios/Pods/
-mobile/ios/build/
-mobile/ios/*.xcworkspace
-mobile/ios/*.xcuserdata
-mobile/ios/DerivedData/
-*.ipa
-*.dSYM.zip
-*.dSYM
 
 # ===================================
-# Backend
+# Tools & Mock Server
 # ===================================
-
-backend/node_modules/
-backend/__pycache__/
-backend/*.pyc
-backend/.env
-backend/.venv
-backend/venv/
-backend/instance/
-backend/htmlcov/
-backend/.pytest_cache/
-backend/.mypy_cache/
-backend/bandit-report.json
-
-# ===================================
-# Integration Tests
-# ===================================
-
+tools/mock-server/node_modules/
+tools/mock-server/uploads/
 tests/integration/node_modules/
-tests/integration/.env.test
-tests/integration/coverage/
-tests/integration/output_*.ipynb
-=======
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-
-# Virtual Environment
-env/
-ENV/
-
-# IDE
-.vscode/
-.idea/
-
-# Environment variables - CRITICAL: Never commit credentials!
-.env
-.env.local
-*.env
-
-# OS
-Thumbs.db
-
-# Testing
-.pytest_cache/
-
-# Database
-*.db
-*.sqlite3
-
-# Videos (local storage)
-videos/
-
-# AWS credentials
-*.csv
-aws_credentials.csv
-*.pem
-*.key
- 
->>>>>>> Stashed changes

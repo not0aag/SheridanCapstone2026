@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: |
     Complete API specification for SafeDrive AI - an intelligent smartphone-based driver safety system.
-    
+
     ## Features
     - JWT-based authentication
     - Real-time trip tracking
@@ -12,14 +12,14 @@ info:
     - Video upload with pre-signed S3 URLs
     - User profile management
     - Trip analytics and safety scoring
-    
+
     ## Authentication
     Most endpoints require Bearer token authentication. Obtain a token via `/auth/login` or `/auth/register`.
-    
+
     ## Rate Limiting
     - Anonymous: 100 requests/hour
     - Authenticated: 1000 requests/hour
-    
+
   contact:
     name: SafeDrive AI Team
     email: support@safedriveai.com
@@ -544,7 +544,6 @@ paths:
                     version: "1.0.0"
                     timestamp: "2025-11-19T10:30:00Z"
 
-
 # ============================================================
 # COMPONENTS
 # ============================================================
@@ -757,7 +756,16 @@ components:
 
     TripSummary:
       type: object
-      required: [trip_id, started_at, ended_at, duration_minutes, distance_km, incidents_count, safety_score]
+      required:
+        [
+          trip_id,
+          started_at,
+          ended_at,
+          duration_minutes,
+          distance_km,
+          incidents_count,
+          safety_score,
+        ]
       properties:
         trip_id:
           type: string
@@ -908,7 +916,8 @@ components:
 
     Video:
       type: object
-      required: [id, trip_id, download_url, duration_seconds, size_bytes, created_at]
+      required:
+        [id, trip_id, download_url, duration_seconds, size_bytes, created_at]
       properties:
         id:
           type: string
