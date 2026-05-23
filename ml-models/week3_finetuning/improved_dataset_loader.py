@@ -132,17 +132,17 @@ def mixup(image1, label1, image2, label2, alpha=0.2):
 def create_dataset(file_paths, labels, is_training=True, use_mixup=False):
     """Create tf.data.Dataset with advanced preprocessing and augmentation."""
     dataset = tf.data.Dataset.from_tensor_slices((file_paths, labels))
-    
+
     if is_training:
         dataset = dataset.shuffle(buffer_size=2000, seed=config.SEED)
-    
+
     # Preprocess
     dataset = dataset.map(preprocess_image, num_parallel_calls=tf.data.AUTOTUNE)
-    
+
     # Apply augmentation only to training set
     if is_training:
         dataset = dataset.map(advanced_augment_image, num_parallel_calls=tf.data.AUTOTUNE)
-        
+
         # Apply mixup if enabled
         if use_mixup and config.USE_MIXUP:
             # Create a second shuffled dataset for mixup
@@ -150,18 +150,30 @@ def create_dataset(file_paths, labels, is_training=True, use_mixup=False):
             dataset2 = dataset2.shuffle(buffer_size=2000, seed=config.SEED + 1)
             dataset2 = dataset2.map(preprocess_image, num_parallel_calls=tf.data.AUTOTUNE)
             dataset2 = dataset2.map(advanced_augment_image, num_parallel_calls=tf.data.AUTOTUNE)
-            
-            # Zip and apply mixup
+
+            # Zip and apply mixup (creates one-hot labels)
             dataset = tf.data.Dataset.zip((dataset, dataset2))
             dataset = dataset.map(
                 lambda x1, x2: mixup(x1[0], x1[1], x2[0], x2[1], config.MIXUP_ALPHA),
                 num_parallel_calls=tf.data.AUTOTUNE
             )
-    
+        else:
+            # No mixup: convert to one-hot for CategoricalCrossentropy
+            dataset = dataset.map(
+                lambda img, lbl: (img, tf.one_hot(lbl, config.NUM_CLASSES)),
+                num_parallel_calls=tf.data.AUTOTUNE
+            )
+    else:
+        # Validation: convert labels to one-hot to match CategoricalCrossentropy
+        dataset = dataset.map(
+            lambda img, lbl: (img, tf.one_hot(lbl, config.NUM_CLASSES)),
+            num_parallel_calls=tf.data.AUTOTUNE
+        )
+
     # Batch and prefetch
     dataset = dataset.batch(config.BATCH_SIZE)
     dataset = dataset.prefetch(tf.data.AUTOTUNE)
-    
+
     return dataset
 
 

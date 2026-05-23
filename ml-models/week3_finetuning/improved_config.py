@@ -31,15 +31,15 @@ SHEAR_RANGE = 0.1  # NEW: simulate camera angle variations
 CHANNEL_SHIFT_RANGE = 0.1  # NEW: color variations
 
 # Regularization
-DROPOUT_RATE = 0.3  # Increased from 0.2
-L2_REGULARIZATION = 0.0001  # NEW: weight decay
+DROPOUT_RATE = 0.2  # Reduced - was too aggressive
+L2_REGULARIZATION = 0.00005  # Reduced weight decay
 
 # Mixup augmentation (proven to improve generalization)
-USE_MIXUP = True
+USE_MIXUP = False  # Disabled - too aggressive for this dataset
 MIXUP_ALPHA = 0.2
 
 # Label smoothing (prevents overconfidence)
-LABEL_SMOOTHING = 0.1
+LABEL_SMOOTHING = 0.05  # Reduced from 0.1
 
 # Class names
 CLASS_NAMES = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9']

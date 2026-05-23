@@ -1,6 +1,6 @@
 """
-Improved training script targeting 92%+ accuracy
-Implements advanced techniques from research
+Training with Class Weights - Fix c0 (Safe Driving) Detection Bias
+Boosts safe driving class to improve generalization
 """
 import tensorflow as tf
 from tensorflow import keras
@@ -10,6 +10,20 @@ import improved_dataset_loader as dataset_loader
 import os
 from datetime import datetime
 import numpy as np
+
+# Class weights to fix c0 bias - boost safe driving and talking to passenger
+CLASS_WEIGHTS = {
+    0: 1.3,  # Boost safe driving significantly
+    1: 1.0,
+    2: 1.0,
+    3: 1.0,
+    4: 1.0,
+    5: 1.0,
+    6: 1.0,
+    7: 1.0,
+    8: 0.85, # Reduce hair/makeup (was being over-predicted)
+    9: 1.15  # Boost talking to passenger (was low)
+}
 
 
 def create_improved_model(num_classes=10):
@@ -132,6 +146,7 @@ def train_phase_1(model, train_dataset, val_dataset, log_dir):
         validation_data=val_dataset,
         epochs=config.INITIAL_EPOCHS,
         callbacks=callbacks,
+        class_weight=CLASS_WEIGHTS,  # Apply class weights
         verbose=config.VERBOSE
     )
     
@@ -172,6 +187,7 @@ def train_phase_2(model, base_model, train_dataset, val_dataset, log_dir):
         validation_data=val_dataset,
         epochs=config.FINE_TUNE_EPOCHS,
         callbacks=callbacks,
+        class_weight=CLASS_WEIGHTS,  # Apply class weights
         verbose=config.VERBOSE
     )
 

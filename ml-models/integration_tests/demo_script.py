@@ -24,8 +24,8 @@ import time
 from collections import deque
 
 # Configuration
-TFLITE_MODEL_PATH = "../week2_training/tflite_models/mobilenetv2_distraction_classifier.tflite"
-CONFIDENCE_THRESHOLD = 0.65  # Lower threshold for demo sensitivity
+TFLITE_MODEL_PATH = "../week3_finetuning/tflite_models/multiangle_model_91pct.tflite"
+CONFIDENCE_THRESHOLD = 0.60  # Lower threshold for demo sensitivity
 
 # Class names with user-friendly labels
 CLASS_NAMES = {
@@ -82,10 +82,11 @@ class DemoSystem:
         print("="*70)
     
     def preprocess_frame(self, frame):
-        """Prepare frame for model"""
+        """Prepare frame for model - MobileNetV2 preprocessing"""
         resized = cv2.resize(frame, (224, 224))
         rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
-        normalized = rgb.astype(np.float32) / 255.0
+        # MobileNetV2 expects input in range [-1, 1], not [0, 1]
+        normalized = (rgb.astype(np.float32) / 127.5) - 1.0
         return np.expand_dims(normalized, axis=0)
     
     def predict(self, frame):
