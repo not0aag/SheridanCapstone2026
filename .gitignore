@@ -75,12 +75,16 @@ tests/integration/output_*.ipynb
 *.pyc
 *.pyo
 
-# ML Models - Keep only small production models
-# Large training models (.h5, .keras) should not be committed
+# ML Models - never commit binary model or image files
 ml-models/*/models/*.h5
 ml-models/*/models/*.keras
 ml-models/week*/models/
 !ml-models/week*/models/.gitkeep
+ml-models/**/*.tflite
+ml-models/**/*.mlmodel
+ml-models/**/*.png
+ml-models/**/*.jpg
+ml-models/**/*.jpeg
 
 # ML Training Logs & Cache
 ml-models/*/logs/
@@ -88,10 +92,7 @@ ml-models/*/*.log
 ml-models/*/__pycache__/
 ml-models/*/*/__pycache__/
 
-# Keep only production-ready models (TFLite, Core ML)
-# These are small and deployment-ready
-!ml-models/*/tflite_models/*.tflite
-!ml-models/*/tflite_models/*.mlmodel
+# TFLite metadata/docs inside tflite_models are fine
 !ml-models/*/tflite_models/*.md
 !ml-models/*/tflite_models/*.json
 
