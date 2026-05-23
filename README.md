@@ -370,13 +370,8 @@ ENVIRONMENT=development
 
 ## 📖 Documentation
 
-- **[System Architecture](docs/architecture/system-architecture.md)** - High-level system design and component interactions
 - **[API Documentation](docs/api/openapi.yaml)** - Complete OpenAPI 3.0 specification
-- **[Data Flow](docs/architecture/data-flow.md)** - Detailed sequence diagrams for all major flows
-- **[Integration Test Plan](docs/integration-test-plan.md)** - Testing strategy and scenarios
-- **[Branch Merge Guide](docs/branch-merge-integration-guide.md)** - Team collaboration and merge procedures
 - **[Mock Server Guide](tools/mock-server/README.md)** - Mock API server usage
-- **[ML Performance Report](docs/ml_performance_report_w1.md)** - Week 1 ML benchmarks
 
 ---
 
@@ -464,11 +459,8 @@ FastAPI • PostgreSQL • S3 • Notifications
 ## Quick links
 
 - Documentation home: `docs/`
-- Architecture: `docs/architecture/system-architecture.md`
 - API (OpenAPI): `docs/api/openapi.yaml`
-- Timeline (Gantt): `docs/timeline/phase1-timeline.md`
-- Communication & meetings: `docs/communication/channels.md`, `docs/schedule/meetings.md`
-- Repo structure & automation: `docs/repo-structure.md` and `scripts/setup_repos.cmd`
+- Repo structure & automation: `scripts/setup_repos.cmd`
 - Mock API Server: `tools/mock-server/` — [Quick Start](tools/mock-server/README.md)
 - ML POC Notebook: `ml/distraction_detection_poc.ipynb`
 - Mobile App: `mobile/` — React Native app with camera, sensors, GPS
