@@ -49,7 +49,10 @@ class DecisionEngine:
     # -----------------------------------------------------------------------
     # Tunable constants — do not change without re-running real-world tests
     # -----------------------------------------------------------------------
-    DISTRACTION_WINDOW   = 15     # number of recent frames for distraction scoring
+    DISTRACTION_WINDOW   = 25     # number of recent frames for distraction scoring
+                                  # 25 frames ≈ 0.8 s at 30 fps — brief mirror
+                                  # checks fall below the 60 % threshold, sustained
+                                  # phone use does not. Tune in Step 6.
     DROWSY_WINDOW_SECS   = 4.0    # rolling time window for PERCLOS (seconds)
     HEAD_RATE_THRESHOLD  = 0.60   # alert if head deviated in >60 % of distraction window
     DIST_RATE_THRESHOLD  = 0.40   # alert if non-c0 class in >40 % of distraction window

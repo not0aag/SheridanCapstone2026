@@ -146,14 +146,15 @@ class TestDistraction:
         assert result["alert"] is True
         assert result["alert_type"] == "DISTRACTED"
 
-    def test_distraction_window_uses_only_last_15_frames(self):
+    def test_distraction_window_uses_only_last_n_frames(self):
         """
-        Feed 5 distracted frames then 15 safe frames (20 total).
-        The distraction window should only see the last 15 (all safe) → no alert.
+        Feed 5 distracted frames then DISTRACTION_WINDOW safe frames.
+        The window should only see the safe frames → distraction_rate = 0.
         """
         engine = _engine()
+        n = DecisionEngine.DISTRACTION_WINDOW
         _feed(engine, 5,  head_deviated=True, cls=1)
-        _feed(engine, 15, t_start=1000.0 + 5/FPS,
+        _feed(engine, n,  t_start=1000.0 + 5/FPS,
               head_deviated=False, cls=0)
         result = engine.get_decision()
         assert result["distraction_rate"] == 0.0
