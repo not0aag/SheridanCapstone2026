@@ -85,10 +85,23 @@ def _make_landmarks(nose_x=0.50, nose_y=0.50, target_ear=0.30):
 
 def _feed_frames(engine, n, nose_x=0.5, nose_y=0.5, ear=0.30,
                  frame_w=640, frame_h=480):
-    """Helper: add n identical synthetic frames to an engine."""
+    """
+    Add n frames spread evenly over DURATION_SECONDS + 0.1 s so the engine
+    finalises on the last frame. Uses unittest.mock to control time so tests
+    run instantly with no real sleeping.
+    """
+    from unittest.mock import patch
+    duration = CalibrationEngine.DURATION_SECONDS
     lm = _make_landmarks(nose_x, nose_y, ear)
-    for _ in range(n):
-        engine.add_frame(lm, frame_w, frame_h)
+
+    # Spread n frames evenly; last frame lands just past the deadline
+    timestamps = [duration * i / max(n - 1, 1) for i in range(n)]
+    timestamps[-1] = duration + 0.01   # ensure finalise triggers
+
+    start = 1_000.0  # arbitrary monotonic start
+    for t in timestamps:
+        with patch("time.monotonic", return_value=start + t):
+            engine.add_frame(lm, frame_w, frame_h)
 
 
 # ---------------------------------------------------------------------------
@@ -128,33 +141,52 @@ class TestCalibrationLifecycle:
         assert not engine.is_calibrated
         assert engine.result is None
 
-    def test_not_calibrated_before_30_frames(self):
+    def test_not_calibrated_before_duration(self):
+        """Frames fed within the first 9 s should not trigger finalisation."""
+        from unittest.mock import patch
         engine = CalibrationEngine()
-        _feed_frames(engine, 29)
+        lm = _make_landmarks()
+        # Simulate 30 frames all within the first 9 seconds
+        for i in range(30):
+            t = 9.0 * i / 30
+            with patch("time.monotonic", return_value=1000.0 + t):
+                engine.add_frame(lm, 640, 480)
         assert not engine.is_calibrated
 
-    def test_calibrated_after_30_frames(self):
+    def test_calibrated_after_duration(self):
         engine = CalibrationEngine()
         _feed_frames(engine, 30)
         assert engine.is_calibrated
 
     def test_progress_increases(self):
+        from unittest.mock import patch
         engine = CalibrationEngine()
         lm = _make_landmarks()
-        progress_values = [engine.add_frame(lm, 640, 480) for _ in range(30)]
-        assert progress_values[0]  == pytest.approx(1 / 30)
-        assert progress_values[-1] == pytest.approx(1.0)
+        duration = CalibrationEngine.DURATION_SECONDS
+        progress_values = []
+        for i in range(10):
+            t = duration * i / 10
+            with patch("time.monotonic", return_value=1000.0 + t):
+                progress_values.append(engine.add_frame(lm, 640, 480))
+        assert progress_values[0] < progress_values[-1]
+        assert progress_values[0] >= 0.0
+        assert progress_values[-1] <= 1.0
 
     def test_progress_stays_at_1_after_completion(self):
+        from unittest.mock import patch
         engine = CalibrationEngine()
         _feed_frames(engine, 30)
         lm = _make_landmarks()
-        # Extra frames after completion should still return 1.0
-        assert engine.add_frame(lm, 640, 480) == 1.0
+        with patch("time.monotonic", return_value=9999.0):
+            assert engine.add_frame(lm, 640, 480) == 1.0
 
-    def test_frames_collected_count(self):
+    def test_frames_collected_increases(self):
+        from unittest.mock import patch
         engine = CalibrationEngine()
-        _feed_frames(engine, 15)
+        lm = _make_landmarks()
+        for i in range(15):
+            with patch("time.monotonic", return_value=1000.0 + i * 0.1):
+                engine.add_frame(lm, 640, 480)
         assert engine.frames_collected == 15
 
 
@@ -175,17 +207,23 @@ class TestEarThreshold:
         Mix 3 blink frames (EAR=0.05) into 27 open frames (EAR=0.30).
         The bottom-10% cutoff should discard them and keep mean near 0.30.
         """
+        from unittest.mock import patch
         engine = CalibrationEngine()
         lm_open  = _make_landmarks(target_ear=0.30)
         lm_blink = _make_landmarks(target_ear=0.05)
+        duration = CalibrationEngine.DURATION_SECONDS
 
-        # Add 27 open frames then 3 blink frames
-        for _ in range(27):
-            engine.add_frame(lm_open, 640, 480)
-        for _ in range(3):
-            engine.add_frame(lm_blink, 640, 480)
+        # 27 open frames across first 9 s, 3 blink frames in last second
+        open_times  = [duration * i / 27 for i in range(27)]
+        blink_times = [9.1, 9.5, duration + 0.01]
 
-        # mean_open_ear should be close to 0.30, not dragged down to ~0.27
+        for t in open_times:
+            with patch("time.monotonic", return_value=1000.0 + t):
+                engine.add_frame(lm_open, 640, 480)
+        for t in blink_times:
+            with patch("time.monotonic", return_value=1000.0 + t):
+                engine.add_frame(lm_blink, 640, 480)
+
         assert engine.result["mean_open_ear"] > 0.28
 
 
@@ -208,13 +246,18 @@ class TestNoseBaseline:
         29 frames at (0.50, 0.50) + 1 outlier at (0.90, 0.10).
         Median should stay near (0.50, 0.50).
         """
+        from unittest.mock import patch
         engine = CalibrationEngine()
         lm_normal  = _make_landmarks(nose_x=0.50, nose_y=0.50)
         lm_outlier = _make_landmarks(nose_x=0.90, nose_y=0.10)
+        duration = CalibrationEngine.DURATION_SECONDS
 
-        for _ in range(29):
-            engine.add_frame(lm_normal, 640, 480)
-        engine.add_frame(lm_outlier, 640, 480)
+        for i in range(29):
+            t = duration * i / 29
+            with patch("time.monotonic", return_value=1000.0 + t):
+                engine.add_frame(lm_normal, 640, 480)
+        with patch("time.monotonic", return_value=1000.0 + duration + 0.01):
+            engine.add_frame(lm_outlier, 640, 480)
 
         assert engine.result["baseline_nose"]["x"] == pytest.approx(0.50, abs=0.01)
         assert engine.result["baseline_nose"]["y"] == pytest.approx(0.50, abs=0.01)

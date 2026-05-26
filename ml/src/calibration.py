@@ -107,18 +107,20 @@ def compute_head_rotation(landmarks, frame_w, frame_h):
 class CalibrationEngine:
     """
     Feed it one frame of MediaPipe landmarks at a time via add_frame().
-    After FRAMES_REQUIRED frames it finalises and sets is_calibrated = True.
+    Collects data for DURATION_SECONDS (time-based, not frame-count-based)
+    then finalises and sets is_calibrated = True.
     Call save() to write calibration.json.
     """
 
-    FRAMES_REQUIRED       = 30
-    EAR_THRESHOLD_RATIO   = 0.75   # alert threshold = mean_open_ear * this
-    EAR_OUTLIER_CUTOFF    = 10     # drop bottom 10 % of EAR samples (blinks)
+    DURATION_SECONDS    = 10    # collect for exactly 10 s regardless of FPS
+    EAR_THRESHOLD_RATIO = 0.75  # alert threshold = mean_open_ear * this
+    EAR_OUTLIER_CUTOFF  = 10    # drop bottom 10 % of EAR samples (blinks)
 
     def __init__(self):
         self._ear_samples  = []   # one float per frame
         self._nose_samples = []   # one (x, y) tuple per frame
         self._rvec_samples = []   # one [rx,ry,rz] list per frame (if solvePnP ok)
+        self._start_time   = None  # set on first frame
         self._frame_count  = 0
         self.is_calibrated = False
         self.result        = None  # populated by _finalise()
@@ -137,8 +139,17 @@ class CalibrationEngine:
         Returns float: calibration progress from 0.0 → 1.0.
         Returns 1.0 immediately if already calibrated.
         """
+        import time
+
         if self.is_calibrated:
             return 1.0
+
+        now = time.monotonic()
+        if self._start_time is None:
+            self._start_time = now
+
+        elapsed  = now - self._start_time
+        progress = min(elapsed / self.DURATION_SECONDS, 1.0)
 
         # EAR — average of both eyes
         left_ear  = compute_ear(landmarks, LEFT_EYE)
@@ -155,21 +166,29 @@ class CalibrationEngine:
             self._rvec_samples.append(rvec)
 
         self._frame_count += 1
-        if self._frame_count >= self.FRAMES_REQUIRED:
+
+        if elapsed >= self.DURATION_SECONDS:
             self._finalise()
 
-        return min(self._frame_count / self.FRAMES_REQUIRED, 1.0)
+        return progress
 
     @property
     def frames_collected(self):
         return self._frame_count
 
+    @property
+    def elapsed_seconds(self):
+        import time
+        if self._start_time is None:
+            return 0.0
+        return min(time.monotonic() - self._start_time, self.DURATION_SECONDS)
+
     def save(self, path="calibration.json"):
         """Write calibration.json. Raises RuntimeError if not yet done."""
         if not self.is_calibrated:
             raise RuntimeError(
-                f"Calibration incomplete — collected {self._frame_count}/"
-                f"{self.FRAMES_REQUIRED} frames."
+                f"Calibration incomplete — {self.elapsed_seconds:.1f}s elapsed, "
+                f"need {self.DURATION_SECONDS}s."
             )
         with open(path, "w") as f:
             json.dump(self.result, f, indent=2)
@@ -260,8 +279,8 @@ def run_webcam_calibration(output_path="calibration.json"):
             if collecting and face_detected:
                 landmarks = results.multi_face_landmarks[0].landmark
                 progress = engine.add_frame(landmarks, frame_w, frame_h)
-                count = engine.frames_collected
-                label = f"CALIBRATING... {count}/{CalibrationEngine.FRAMES_REQUIRED}"
+                remaining = max(0, CalibrationEngine.DURATION_SECONDS - engine.elapsed_seconds)
+                label = f"CALIBRATING... {remaining:.0f}s remaining"
                 cv2.putText(display, label, (20, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 200, 255), 2)
                 bar_w = int(progress * (frame_w - 40))
