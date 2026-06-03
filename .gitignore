@@ -15,6 +15,7 @@ venv/
 env/
 ENV/
 safedrive_ml_env/
+safedrive_ml/
 backend/venv/
 backend/.venv/
 backend/instance/
