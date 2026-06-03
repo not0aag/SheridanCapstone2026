@@ -12,69 +12,54 @@ import androidx.camera.core.ImageProxy
 import com.sukhman.safedrive.ml.InferenceEngine
 import com.sukhman.safedrive.ml.InferenceResult
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import java.nio.ByteBuffer
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
-// Analyzer that measures FPS and calls the provided InferenceEngine asynchronously.
 class FrameAnalyzer(
     private val engine: InferenceEngine,
-    private val alertManager: AlertManager? = null
+    private val alertManager: AlertManager? = null,
+    private val scope: CoroutineScope
 ) : ImageAnalysis.Analyzer {
 
     private val frames = AtomicInteger(0)
     private val windowStart = AtomicLong(System.currentTimeMillis())
-    private val scope = CoroutineScope(Dispatchers.Default)
+
+    // Ensures only one inference runs at a time.
+    // TFLite Interpreter is not thread-safe — concurrent calls crash.
+    // With STRATEGY_KEEP_ONLY_LATEST, CameraX drops frames while we're busy anyway.
+    private val inferenceRunning = AtomicBoolean(false)
 
     override fun analyze(image: ImageProxy) {
         try {
+            // FPS counter
             val now = System.currentTimeMillis()
             frames.incrementAndGet()
-            val start = windowStart.get()
-            val elapsed = now - start
+            val elapsed = now - windowStart.get()
             if (elapsed >= 1000L) {
                 val count = frames.getAndSet(0)
                 windowStart.set(now)
-                val fps = count * 1000.0 / (if (elapsed == 0L) 1.0 else elapsed.toDouble())
-                Log.i("FrameAnalyzer", String.format("Approx FPS: %.2f (frames=%d elapsed=%dms)", fps, count, elapsed))
+                val fps = count * 1000.0 / elapsed.coerceAtLeast(1L).toDouble()
                 DebugState.fps = fps
+                Log.d("FrameAnalyzer", "FPS: ${"%.1f".format(fps)}")
             }
 
-            // Convert ImageProxy to Bitmap for ML inference
+            // Drop frame if previous inference hasn't finished — avoids concurrent TFLite calls.
+            if (!inferenceRunning.compareAndSet(false, true)) return
+
             val bitmap = imageProxyToBitmap(image)
 
-            // Call inference asynchronously
             scope.launch {
                 try {
                     val result = engine.runInference(bitmap)
-                    when (result) {
-                        is InferenceResult.NoDetection -> {
-                            DebugState.faceLandmarks = emptyList()
-                            DebugState.currentPrediction = "Safe driving"
-                            DebugState.predictionConfidence = 0f
-                        }
-                        is InferenceResult.FaceLandmarks -> {
-                            DebugState.faceLandmarks = result.landmarks
-                            DebugState.currentPrediction = "Face tracked"
-                            Log.d("FrameAnalyzer", "Face detected with ${result.landmarks.size} landmarks")
-                        }
-                        is InferenceResult.Distraction -> {
-                            Log.w("FrameAnalyzer", "Distraction detected: ${result.label} (${result.confidence})")
-                            DebugState.currentPrediction = result.label
-                            DebugState.predictionConfidence = result.confidence
-                            alertManager?.triggerDistractionAlert(result.label, result.confidence)
-                        }
-                        is InferenceResult.Drowsiness -> {
-                            Log.w("FrameAnalyzer", "Drowsiness detected: PERCLOS=${result.perclos}")
-                            DebugState.currentPrediction = "Drowsiness"
-                            alertManager?.triggerDrowsinessAlert(result.perclos)
-                        }
-                    }
+                    handleResult(result)
                 } catch (e: Exception) {
-                    Log.w("FrameAnalyzer", "Inference failed: ${e.message}")
+                    Log.w("FrameAnalyzer", "Inference error: ${e.message}")
+                } finally {
+                    inferenceRunning.set(false)
                 }
             }
         } finally {
@@ -82,9 +67,38 @@ class FrameAnalyzer(
         }
     }
 
-    /**
-     * Convert CameraX ImageProxy (YUV_420_888) to Bitmap
-     */
+    private fun handleResult(result: InferenceResult) {
+        when (result) {
+            is InferenceResult.NoDetection -> {
+                DebugState.faceLandmarks = emptyList()
+                DebugState.currentPrediction = "Safe driving"
+                DebugState.predictionConfidence = 0f
+            }
+            is InferenceResult.FaceLandmarks -> {
+                DebugState.faceLandmarks = result.landmarks
+                DebugState.currentPrediction = "Face tracked"
+                DebugState.predictionConfidence = 0f
+            }
+            is InferenceResult.Distraction -> {
+                Log.w("FrameAnalyzer", "DISTRACTION: ${result.label} (${result.confidence})")
+                DebugState.faceLandmarks = emptyList()
+                DebugState.currentPrediction = result.label
+                DebugState.predictionConfidence = result.confidence
+                alertManager?.triggerDistractionAlert(result.label, result.confidence)
+            }
+            is InferenceResult.Drowsiness -> {
+                Log.w("FrameAnalyzer", "DROWSINESS: PERCLOS=${result.perclos}")
+                DebugState.currentPrediction = "Drowsiness"
+                DebugState.predictionConfidence = result.perclos
+                alertManager?.triggerDrowsinessAlert(result.perclos)
+            }
+        }
+    }
+
+    fun cancel() {
+        scope.cancel()
+    }
+
     private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
         val yBuffer = image.planes[0].buffer
         val uBuffer = image.planes[1].buffer
@@ -95,31 +109,22 @@ class FrameAnalyzer(
         val vSize = vBuffer.remaining()
 
         val nv21 = ByteArray(ySize + uSize + vSize)
-
-        // U and V are swapped
         yBuffer.get(nv21, 0, ySize)
-        vBuffer.get(nv21, ySize, vSize)
+        vBuffer.get(nv21, ySize, vSize)         // V before U = NV21
         uBuffer.get(nv21, ySize + vSize, uSize)
 
         val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null)
         val out = ByteArrayOutputStream()
         yuvImage.compressToJpeg(Rect(0, 0, image.width, image.height), 85, out)
-        val imageBytes = out.toByteArray()
-        val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+        val bytes = out.toByteArray()
+        val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
 
-        // Rotate bitmap if needed (front camera is often rotated)
-        return rotateBitmap(bitmap, image.imageInfo.rotationDegrees)
+        return rotateBitmap(bmp, image.imageInfo.rotationDegrees)
     }
 
-    /**
-     * Rotate bitmap by specified degrees
-     */
     private fun rotateBitmap(bitmap: Bitmap, degrees: Int): Bitmap {
         if (degrees == 0) return bitmap
-
-        val matrix = Matrix()
-        matrix.postRotate(degrees.toFloat())
+        val matrix = Matrix().apply { postRotate(degrees.toFloat()) }
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 }
-

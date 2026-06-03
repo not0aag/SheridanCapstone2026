@@ -33,6 +33,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -74,8 +76,15 @@ fun TripActiveScreen(
     var isSensorsActive by remember { mutableStateOf(false) }
     var currentSpeed by remember { mutableStateOf(0.0) }
 
-    // Background executor for frame analysis — never block the main thread.
+    // Dedicated executor for CameraX frame delivery — keeps camera off the main thread.
     val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
+
+    // Coroutine scope for ML inference — tied to this screen's lifetime.
+    // Cancelled in onDispose so no dangling inference jobs survive screen exit.
+    val inferenceScope = remember { CoroutineScope(Dispatchers.Default) }
+
+    // FrameAnalyzer wires camera → TFLite inference → DebugState. Created once.
+    val frameAnalyzer = remember { FrameAnalyzer(inferenceEngine, alertManager, inferenceScope) }
 
     // Request permissions on first launch if not already granted.
     LaunchedEffect(Unit) {
@@ -104,14 +113,15 @@ fun TripActiveScreen(
         }
     }
 
-    // Cleanup on screen exit regardless of permission state.
+    // Cleanup on screen exit.
     DisposableEffect(Unit) {
         onDispose {
+            frameAnalyzer.cancel()   // stop any in-flight inference
+            analysisExecutor.shutdown()
             DrivingService.stop(context)
             sensorsManager.stop()
             locationHelper.stop()
             alertManager.clearAlerts()
-            analysisExecutor.shutdown()
         }
     }
 
@@ -178,8 +188,7 @@ fun TripActiveScreen(
                                 .setResolutionSelector(resolutionSelector)
                                 .build()
                                 .also {
-                                    // Run on dedicated background thread, never the main thread
-                                    it.setAnalyzer(analysisExecutor, FrameAnalyzer(inferenceEngine, alertManager))
+                                    it.setAnalyzer(analysisExecutor, frameAnalyzer)
                                 }
 
                             val selector = CameraSelector.Builder()

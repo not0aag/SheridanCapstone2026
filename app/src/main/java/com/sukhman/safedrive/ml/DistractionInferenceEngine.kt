@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.tensorflow.lite.Interpreter
 import org.tensorflow.lite.support.common.FileUtil
@@ -35,7 +37,7 @@ class DistractionInferenceEngine(
     private val context: Context,
     private val modelPath: String = "models/distraction_classifier.tflite",
     private val numThreads: Int = 4,
-    private val confidenceThreshold: Float = 0.65f
+    private val confidenceThreshold: Float = 0.55f
 ) : InferenceEngine {
 
     companion object {
@@ -57,7 +59,9 @@ class DistractionInferenceEngine(
     }
 
     private var interpreter: Interpreter? = null
-    private val outputBuffer = Array(1) { FloatArray(10) }
+    // Mutex ensures the TFLite interpreter is never called from two coroutines at once.
+    // TFLite Interpreter is not thread-safe — concurrent .run() calls crash the process.
+    private val mutex = Mutex()
 
     override suspend fun initialize() {
         withContext(Dispatchers.IO) {
@@ -71,26 +75,31 @@ class DistractionInferenceEngine(
         }
     }
 
-    override suspend fun runInference(frame: Bitmap): InferenceResult = withContext(Dispatchers.Default) {
-        val interp = interpreter ?: return@withContext InferenceResult.NoDetection
+    override suspend fun runInference(frame: Bitmap): InferenceResult {
+        val interp = interpreter ?: return InferenceResult.NoDetection
 
-        val inputBuffer = preprocessBitmap(frame)
+        return mutex.withLock {
+            withContext(Dispatchers.Default) {
+                // Output buffer allocated per-call — never shared between concurrent coroutines.
+                val outputBuffer = Array(1) { FloatArray(10) }
+                val inputBuffer = preprocessBitmap(frame)
 
-        outputBuffer[0].fill(0f)
-        interp.run(inputBuffer, outputBuffer)
+                interp.run(inputBuffer, outputBuffer)
 
-        val probs = outputBuffer[0]
-        val topClass = probs.indices.maxByOrNull { probs[it] } ?: 0
-        val topConf = probs[topClass]
+                val probs = outputBuffer[0]
+                val topClass = probs.indices.maxByOrNull { probs[it] } ?: 0
+                val topConf = probs[topClass]
 
-        Log.d(TAG, "Prediction: class=$topClass (${CLASS_LABELS[topClass]}) conf=${"%.2f".format(topConf)}")
+                Log.d(TAG, "class=$topClass (${CLASS_LABELS[topClass]}) conf=${"%.2f".format(topConf)}")
 
-        when {
-            topClass == 0 || topConf < confidenceThreshold -> InferenceResult.NoDetection
-            else -> InferenceResult.Distraction(
-                label = CLASS_LABELS[topClass] ?: "Unknown",
-                confidence = topConf
-            )
+                when {
+                    topClass == 0 || topConf < confidenceThreshold -> InferenceResult.NoDetection
+                    else -> InferenceResult.Distraction(
+                        label = CLASS_LABELS[topClass] ?: "Unknown",
+                        confidence = topConf
+                    )
+                }
+            }
         }
     }
 
