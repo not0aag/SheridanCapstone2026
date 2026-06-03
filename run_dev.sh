@@ -76,6 +76,6 @@ adb shell pm grant ${PKG} android.permission.RECORD_AUDIO || true
 adb shell pm grant ${PKG} android.permission.ACCESS_FINE_LOCATION || true
 
 # Tail filtered logcat
-echo "Tailing logcat (press Ctrl+C to stop). Filtering tags: Camera, FpsAnalyzer, SensorsManager, LocationHelper, MainActivity"
-adb logcat -v time | egrep "Camera|FpsAnalyzer|SensorsManager|LocationHelper|MainActivity"
+echo "Tailing logcat (press Ctrl+C to stop). Filtering tags: FrameAnalyzer, DistractionEngine, AlertManager, SensorsManager, LocationHelper, MainActivity"
+adb logcat -v time | egrep "FrameAnalyzer|DistractionEngine|AlertManager|SensorsManager|LocationHelper|MainActivity"
 
