@@ -66,6 +66,27 @@ DROWSY takes priority when both conditions are met simultaneously.
 
 ---
 
+## Setup
+
+Run these once from the repo root after cloning:
+
+```bash
+# 1. Create the virtual environment (Python 3.10 required)
+python3.10 -m venv safedrive_ml
+
+# 2. Install dependencies
+safedrive_ml/bin/pip install -r ml/requirements.txt
+```
+
+> **macOS only:** `tflite-runtime` has no Python 3.10 wheel for macOS, so `tensorflow-macos`
+> is used instead. On Linux or Windows you can replace `tensorflow-macos` in
+> `ml/requirements.txt` with `tensorflow` and re-run pip install.
+
+The venv is named `safedrive_ml/` so all commands in this README work as-is.
+It is gitignored — every team member creates their own copy locally.
+
+---
+
 ## Running the demo
 
 ```bash
