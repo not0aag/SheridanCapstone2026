@@ -9,6 +9,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.Looper
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.*
 import android.util.Log
@@ -35,6 +36,7 @@ class LocationHelper(
                 // request a single fresh location
                 val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 1000L)
                     .setMinUpdateDistanceMeters(1f)
+                    .setMinUpdateIntervalMillis(500L)
                     .build()
 
                 locationCallback = object : LocationCallback() {
@@ -50,7 +52,7 @@ class LocationHelper(
                         stop()
                     }
                 }
-                fusedLocationClient.requestLocationUpdates(req, locationCallback as LocationCallback, null)
+                fusedLocationClient.requestLocationUpdates(req, locationCallback as LocationCallback, Looper.getMainLooper())
             }
         }.addOnFailureListener {
             Log.w("LocationHelper", "Failed to get last location: ${it.message}")
@@ -58,8 +60,38 @@ class LocationHelper(
         }
     }
 
+    @SuppressLint("MissingPermission")
+    fun startLocationUpdates(onLocation: (Location) -> Unit, intervalMs: Long = 1000L) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.w("LocationHelper", "Location permission not granted (startLocationUpdates)")
+            return
+        }
+
+        // If already running, remove first
+        stop()
+
+        val req = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, intervalMs)
+            .setMinUpdateDistanceMeters(1f)
+            .setMinUpdateIntervalMillis(500L)
+            .build()
+
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                val loc = result.lastLocation
+                if (loc != null) {
+                    Log.d("LocationHelper", "onLocationResult: ${loc.latitude}, ${loc.longitude} (speed=${loc.speed})")
+                    onLocation(loc)
+                }
+            }
+        }
+
+        fusedLocationClient.requestLocationUpdates(req, locationCallback as LocationCallback, Looper.getMainLooper())
+        Log.i("LocationHelper", "Started continuous location updates (intervalMs=$intervalMs)")
+    }
+
     fun stop() {
         locationCallback?.let { fusedLocationClient.removeLocationUpdates(it) }
         locationCallback = null
+        Log.i("LocationHelper", "Location updates stopped")
     }
 }
