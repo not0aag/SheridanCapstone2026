@@ -22,7 +22,9 @@ import androidx.compose.ui.unit.sp
 fun HomeScreen(
     onStartTrip: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    tripDetector: com.sukhman.safedrive.service.TripDetector
+    onCalibrate: () -> Unit,
+    tripDetector: com.sukhman.safedrive.service.TripDetector,
+    isCalibrated: Boolean = false
 ) {
     var tripStats by remember { mutableStateOf(TripStats()) }
 
@@ -124,6 +126,33 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(48.dp))
 
+            // Calibration status chip
+            val calibLabel = if (isCalibrated) "Calibrated ✓" else "Not calibrated"
+            val calibColor = if (isCalibrated)
+                MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.error
+            Text(
+                text = calibLabel,
+                fontSize = 13.sp,
+                color = calibColor,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Calibrate button
+            OutlinedButton(
+                onClick = onCalibrate,
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Text(
+                    text = if (isCalibrated) "Re-Calibrate" else "Calibrate First (10 sec)",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             // Start trip button
             Button(
                 onClick = onStartTrip,
@@ -145,9 +174,11 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Info text
             Text(
-                text = "Tap to start real-time driver monitoring with AI-powered distraction and drowsiness detection.",
+                text = if (isCalibrated)
+                    "Calibrated — ready for monitoring."
+                else
+                    "Calibrate first so the app learns your eye baseline, then start monitoring.",
                 fontSize = 14.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

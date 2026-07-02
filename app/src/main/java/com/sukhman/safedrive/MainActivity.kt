@@ -5,10 +5,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
-import com.sukhman.safedrive.ml.DistractionInferenceEngine
-import com.sukhman.safedrive.ml.FaceMeshInferenceEngine
-import com.sukhman.safedrive.ml.InferenceEngine
-import com.sukhman.safedrive.ml.MockInferenceEngine
+import com.sukhman.safedrive.ml.AndroidCalibrationEngine
+import com.sukhman.safedrive.ml.CombinedDetectionEngine
 import com.sukhman.safedrive.service.TripDetector
 import com.sukhman.safedrive.ui.theme.SafeDriveTheme
 import kotlinx.coroutines.launch
@@ -19,7 +17,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var locationHelper: LocationHelper
     private lateinit var alertManager: AlertManager
     private val tripDetector = TripDetector()
-    private lateinit var inferenceEngine: InferenceEngine
+    private lateinit var inferenceEngine: CombinedDetectionEngine
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,28 +29,19 @@ class MainActivity : ComponentActivity() {
         )
         alertManager = AlertManager(this)
 
-        // Model priority: distraction classifier (team's real model) → face mesh → mock
-        inferenceEngine = when {
-            modelAssetExists("models/distraction_classifier.tflite") -> {
-                Log.i("MainActivity", "distraction_classifier.tflite found — using DistractionInferenceEngine")
-                DistractionInferenceEngine(this)
-            }
-            modelAssetExists("models/face_landmarker.tflite") -> {
-                Log.i("MainActivity", "face_landmarker.tflite found — using FaceMeshInferenceEngine")
-                FaceMeshInferenceEngine(this)
-            }
-            else -> {
-                Log.i("MainActivity", "No model found — using MockInferenceEngine")
-                MockInferenceEngine()
-            }
-        }
+        val calibrationEngine = AndroidCalibrationEngine(this)
+
+        // Sync calibration state to DebugState so the UI reflects SharedPreferences on cold start
+        DebugState.isCalibrated = calibrationEngine.isCalibrated
+
+        inferenceEngine = CombinedDetectionEngine(this, calibrationEngine)
 
         lifecycleScope.launch {
             try {
                 inferenceEngine.initialize()
                 Log.i("MainActivity", "Inference engine ready")
             } catch (e: Exception) {
-                Log.e("MainActivity", "Inference engine init failed, disabling ML", e)
+                Log.e("MainActivity", "Inference engine init failed", e)
             }
         }
 
@@ -60,10 +49,10 @@ class MainActivity : ComponentActivity() {
             SafeDriveTheme {
                 SafeDriveNavigation(
                     inferenceEngine = inferenceEngine,
-                    alertManager = alertManager,
-                    sensorsManager = sensorsManager,
-                    locationHelper = locationHelper,
-                    tripDetector = tripDetector
+                    alertManager    = alertManager,
+                    sensorsManager  = sensorsManager,
+                    locationHelper  = locationHelper,
+                    tripDetector    = tripDetector
                 )
             }
         }
@@ -76,12 +65,5 @@ class MainActivity : ComponentActivity() {
         tripDetector.destroy()
         inferenceEngine.close()
         alertManager.destroy()
-    }
-
-    private fun modelAssetExists(path: String): Boolean = try {
-        assets.open(path).close()
-        true
-    } catch (_: Exception) {
-        false
     }
 }

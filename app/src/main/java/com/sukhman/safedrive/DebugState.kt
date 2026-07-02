@@ -23,4 +23,11 @@ object DebugState {
     // Current inference result label (e.g. "Safe driving", "Texting - right hand")
     var currentPrediction by mutableStateOf("Initializing...")
     var predictionConfidence by mutableStateOf(0f)
+
+    // Drowsiness / calibration state
+    var earValue by mutableStateOf(0f)
+    var eyesClosed by mutableStateOf(false)
+    var perclosPct by mutableStateOf(0f)
+    var calibrationProgress by mutableStateOf(0f)
+    var isCalibrated by mutableStateOf(false)
 }
