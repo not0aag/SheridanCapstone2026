@@ -3,11 +3,16 @@ package com.sukhman.safedrive.service
 import kotlinx.coroutines.*
 
 class TripDetector(
-    private val speedThresholdMps: Double = 15.0 / 3.6, // 15 km/h -> m/s
+    speedThresholdMps: Double = 15.0 / 3.6, // 15 km/h -> m/s
     private val requiredSecondsAboveThreshold: Int = 30,
     private val requiredSecondsBelowThreshold: Int = 10,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
 ) {
+
+    // Mutable + volatile: read on the sensor/location update thread, written from
+    // Compose/main when the user changes the Speed Threshold in Settings.
+    @Volatile
+    var speedThresholdMps: Double = speedThresholdMps
 
     interface Listener {
         fun onTripStarted()

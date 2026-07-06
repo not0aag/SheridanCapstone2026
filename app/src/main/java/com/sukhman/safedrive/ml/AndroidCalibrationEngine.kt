@@ -57,18 +57,14 @@ class AndroidCalibrationEngine(context: Context) {
 
     private fun finalise() {
         isCalibrating = false
-        if (earSamples.isEmpty()) { Log.w(TAG, "No samples — using default"); return }
+        val result = CalibrationMath.compute(earSamples)
+        if (result == null) { Log.w(TAG, "No samples — using default"); return }
 
-        val sorted = earSamples.sorted()
-        val cutoff = (sorted.size * 0.10).toInt()
-        val filtered = sorted.drop(cutoff)
-        if (filtered.isEmpty()) { Log.w(TAG, "All filtered — using default"); return }
-
-        meanOpenEar = filtered.average().toFloat()
-        earThreshold = meanOpenEar * 0.75f
+        meanOpenEar = result.meanOpenEar
+        earThreshold = result.earThreshold
         isCalibrated = true
         progress = 1f
-        Log.i(TAG, "Done — mean=$meanOpenEar threshold=$earThreshold (${filtered.size} samples)")
+        Log.i(TAG, "Done — mean=$meanOpenEar threshold=$earThreshold (${result.sampleCount} samples)")
         saveToPrefs()
     }
 

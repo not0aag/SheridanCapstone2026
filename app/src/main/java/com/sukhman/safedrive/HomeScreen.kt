@@ -24,15 +24,32 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onCalibrate: () -> Unit,
     tripDetector: com.sukhman.safedrive.service.TripDetector,
+    tripStatsStore: TripStatsStore,
+    alertManager: AlertManager,
     isCalibrated: Boolean = false
 ) {
-    var tripStats by remember { mutableStateOf(TripStats()) }
+    // Seeded from persisted stores so counts survive navigation and app restarts.
+    // Re-read on every entry to this screen (LaunchedEffect(Unit) re-runs each time
+    // this composable re-enters composition, i.e. whenever the user navigates back here).
+    var tripStats by remember {
+        mutableStateOf(
+            TripStats(
+                totalTrips = tripStatsStore.totalTrips,
+                totalAlerts = alertManager.totalAlerts,
+                tripsToday = tripStatsStore.tripsToday
+            )
+        )
+    }
 
-    // Monitor trip state
     LaunchedEffect(Unit) {
+        tripStats = tripStats.copy(
+            totalTrips = tripStatsStore.totalTrips,
+            totalAlerts = alertManager.totalAlerts,
+            tripsToday = tripStatsStore.tripsToday
+        )
         tripDetector.setListener(object : com.sukhman.safedrive.service.TripDetector.Listener {
             override fun onTripStarted() {
-                tripStats = tripStats.copy(isActive = true, totalTrips = tripStats.totalTrips + 1)
+                tripStats = tripStats.copy(isActive = true)
             }
 
             override fun onTripStopped() {
@@ -109,7 +126,7 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         StatItem(label = "Total Trips", value = tripStats.totalTrips.toString())
-                        StatItem(label = "Active Alerts", value = tripStats.totalAlerts.toString())
+                        StatItem(label = "Total Alerts", value = tripStats.totalAlerts.toString())
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))

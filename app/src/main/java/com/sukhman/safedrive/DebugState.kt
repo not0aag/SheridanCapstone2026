@@ -30,4 +30,8 @@ object DebugState {
     var perclosPct by mutableStateOf(0f)
     var calibrationProgress by mutableStateOf(0f)
     var isCalibrated by mutableStateOf(false)
+
+    // True once CombinedDetectionEngine finishes init; false if face-mesh failed to load,
+    // meaning drowsiness detection is disabled for the session (distraction-only mode).
+    var drowsinessAvailable by mutableStateOf(true)
 }

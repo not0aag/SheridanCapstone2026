@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
 import com.sukhman.safedrive.ml.AndroidCalibrationEngine
+import com.sukhman.safedrive.ml.AppSettingsStore
 import com.sukhman.safedrive.ml.CombinedDetectionEngine
 import com.sukhman.safedrive.service.TripDetector
 import com.sukhman.safedrive.ui.theme.SafeDriveTheme
@@ -18,6 +19,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var alertManager: AlertManager
     private val tripDetector = TripDetector()
     private lateinit var inferenceEngine: CombinedDetectionEngine
+    private lateinit var settingsStore: AppSettingsStore
+    private lateinit var tripStatsStore: TripStatsStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,6 +31,8 @@ class MainActivity : ComponentActivity() {
             com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(this)
         )
         alertManager = AlertManager(this)
+        settingsStore = AppSettingsStore(this)
+        tripStatsStore = TripStatsStore(this)
 
         val calibrationEngine = AndroidCalibrationEngine(this)
 
@@ -35,6 +40,11 @@ class MainActivity : ComponentActivity() {
         DebugState.isCalibrated = calibrationEngine.isCalibrated
 
         inferenceEngine = CombinedDetectionEngine(this, calibrationEngine)
+
+        // Apply persisted thresholds into the live engines before monitoring starts.
+        inferenceEngine.decisionEngine.perclosThreshold = settingsStore.perclosThreshold
+        inferenceEngine.decisionEngine.distRateThreshold = settingsStore.distRateThreshold
+        tripDetector.speedThresholdMps = settingsStore.speedThresholdKmh / 3.6
 
         lifecycleScope.launch {
             try {
@@ -52,7 +62,9 @@ class MainActivity : ComponentActivity() {
                     alertManager    = alertManager,
                     sensorsManager  = sensorsManager,
                     locationHelper  = locationHelper,
-                    tripDetector    = tripDetector
+                    tripDetector    = tripDetector,
+                    settingsStore   = settingsStore,
+                    tripStatsStore  = tripStatsStore
                 )
             }
         }

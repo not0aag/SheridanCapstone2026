@@ -225,6 +225,26 @@ fun TripActiveScreen(
                     }
                 }
 
+                // Drowsiness-unavailable notice — face mesh failed to load, so only
+                // distraction detection is running this session. Surfaced instead of
+                // silently disabling drowsiness alerts with no explanation.
+                if (!DebugState.drowsinessAvailable) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(top = 16.dp, start = 16.dp)
+                            .background(Color(0xCCE68A00), shape = MaterialTheme.shapes.small)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            "⚠ Drowsiness detection unavailable — distraction-only mode",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
                 // Alert banner — shown whenever lastAlertType is non-empty
                 if (DebugState.lastAlertType.isNotEmpty()) {
                     AlertBanner(

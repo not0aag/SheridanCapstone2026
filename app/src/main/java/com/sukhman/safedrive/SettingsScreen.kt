@@ -12,6 +12,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.sukhman.safedrive.ml.AndroidDecisionEngine
+import com.sukhman.safedrive.ml.AppSettingsStore
+import com.sukhman.safedrive.service.TripDetector
+
+// Range each sensitivity slider maps to. Default slider position (0.5) reproduces
+// the values AndroidDecisionEngine shipped with before these were made tunable.
+private const val PERCLOS_MIN = 15.0
+private const val PERCLOS_MAX = 45.0
+private const val DIST_RATE_MIN = 0.20
+private const val DIST_RATE_MAX = 0.60
+
+private fun perclosToSlider(threshold: Double): Float =
+    ((threshold - PERCLOS_MIN) / (PERCLOS_MAX - PERCLOS_MIN)).toFloat().coerceIn(0f, 1f)
+
+private fun sliderToPerclos(slider: Float): Double =
+    PERCLOS_MIN + slider * (PERCLOS_MAX - PERCLOS_MIN)
+
+private fun distRateToSlider(threshold: Double): Float =
+    ((threshold - DIST_RATE_MIN) / (DIST_RATE_MAX - DIST_RATE_MIN)).toFloat().coerceIn(0f, 1f)
+
+private fun sliderToDistRate(slider: Float): Double =
+    DIST_RATE_MIN + slider * (DIST_RATE_MAX - DIST_RATE_MIN)
 
 /**
  * Settings Screen - Configure alert preferences and app settings
@@ -20,12 +42,15 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun SettingsScreen(
     alertManager: AlertManager,
+    decisionEngine: AndroidDecisionEngine,
+    tripDetector: TripDetector,
+    settingsStore: AppSettingsStore,
     onNavigateBack: () -> Unit
 ) {
     var alertsEnabled by remember { mutableStateOf(alertManager.alertsEnabled) }
-    var speedThreshold by remember { mutableStateOf(15) }
-    var distractionSensitivity by remember { mutableStateOf(0.5f) }
-    var drowsinessSensitivity by remember { mutableStateOf(0.5f) }
+    var speedThreshold by remember { mutableStateOf(settingsStore.speedThresholdKmh) }
+    var distractionSensitivity by remember { mutableStateOf(distRateToSlider(settingsStore.distRateThreshold)) }
+    var drowsinessSensitivity by remember { mutableStateOf(perclosToSlider(settingsStore.perclosThreshold)) }
 
     Scaffold(
         topBar = {
@@ -102,7 +127,12 @@ fun SettingsScreen(
                     )
                     Slider(
                         value = distractionSensitivity,
-                        onValueChange = { distractionSensitivity = it },
+                        onValueChange = {
+                            distractionSensitivity = it
+                            val threshold = sliderToDistRate(it)
+                            decisionEngine.distRateThreshold = threshold
+                            settingsStore.saveDistRateThreshold(threshold)
+                        },
                         valueRange = 0f..1f,
                         enabled = alertsEnabled,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -126,7 +156,12 @@ fun SettingsScreen(
                     )
                     Slider(
                         value = drowsinessSensitivity,
-                        onValueChange = { drowsinessSensitivity = it },
+                        onValueChange = {
+                            drowsinessSensitivity = it
+                            val threshold = sliderToPerclos(it)
+                            decisionEngine.perclosThreshold = threshold
+                            settingsStore.savePerclosThreshold(threshold)
+                        },
                         valueRange = 0f..1f,
                         enabled = alertsEnabled,
                         modifier = Modifier.padding(vertical = 8.dp)
@@ -175,7 +210,13 @@ fun SettingsScreen(
 
                         Row {
                             Button(
-                                onClick = { if (speedThreshold > 5) speedThreshold -= 5 },
+                                onClick = {
+                                    if (speedThreshold > 5) {
+                                        speedThreshold -= 5
+                                        tripDetector.speedThresholdMps = speedThreshold / 3.6
+                                        settingsStore.saveSpeedThresholdKmh(speedThreshold)
+                                    }
+                                },
                                 modifier = Modifier.size(48.dp),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
@@ -183,7 +224,13 @@ fun SettingsScreen(
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(
-                                onClick = { if (speedThreshold < 50) speedThreshold += 5 },
+                                onClick = {
+                                    if (speedThreshold < 50) {
+                                        speedThreshold += 5
+                                        tripDetector.speedThresholdMps = speedThreshold / 3.6
+                                        settingsStore.saveSpeedThresholdKmh(speedThreshold)
+                                    }
+                                },
                                 modifier = Modifier.size(48.dp),
                                 contentPadding = PaddingValues(0.dp)
                             ) {
@@ -216,7 +263,7 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     InfoRow(label = "Build", value = "Debug")
                     Spacer(modifier = Modifier.height(8.dp))
-                    InfoRow(label = "ML Engine", value = "MockInferenceEngine")
+                    InfoRow(label = "ML Engine", value = "CombinedDetectionEngine (MobileNetV2 + FaceMesh)")
                     Spacer(modifier = Modifier.height(8.dp))
                     InfoRow(label = "Camera", value = "CameraX (1080p @ 30fps)")
                 }
@@ -227,11 +274,15 @@ fun SettingsScreen(
             // Reset button
             OutlinedButton(
                 onClick = {
+                    settingsStore.resetToDefaults()
                     alertsEnabled = true
-                    speedThreshold = 15
-                    distractionSensitivity = 0.5f
-                    drowsinessSensitivity = 0.5f
+                    speedThreshold = settingsStore.speedThresholdKmh
+                    distractionSensitivity = distRateToSlider(settingsStore.distRateThreshold)
+                    drowsinessSensitivity = perclosToSlider(settingsStore.perclosThreshold)
                     alertManager.alertsEnabled = true
+                    decisionEngine.distRateThreshold = settingsStore.distRateThreshold
+                    decisionEngine.perclosThreshold = settingsStore.perclosThreshold
+                    tripDetector.speedThresholdMps = settingsStore.speedThresholdKmh / 3.6
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {

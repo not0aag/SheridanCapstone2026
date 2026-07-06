@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.sukhman.safedrive.ml.AppSettingsStore
 import com.sukhman.safedrive.ml.CombinedDetectionEngine
 
 sealed class Screen(val route: String) {
@@ -21,16 +22,23 @@ fun SafeDriveNavigation(
     sensorsManager: SensorsManager,
     locationHelper: LocationHelper,
     tripDetector: com.sukhman.safedrive.service.TripDetector,
+    settingsStore: AppSettingsStore,
+    tripStatsStore: TripStatsStore,
     navController: NavHostController = rememberNavController()
 ) {
     NavHost(navController = navController, startDestination = Screen.Home.route) {
 
         composable(Screen.Home.route) {
             HomeScreen(
-                onStartTrip          = { navController.navigate(Screen.TripActive.route) },
+                onStartTrip          = {
+                    tripStatsStore.recordTripStarted()
+                    navController.navigate(Screen.TripActive.route)
+                },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onCalibrate          = { navController.navigate(Screen.Calibration.route) },
                 tripDetector         = tripDetector,
+                tripStatsStore       = tripStatsStore,
+                alertManager         = alertManager,
                 isCalibrated         = DebugState.isCalibrated
             )
         }
@@ -59,8 +67,11 @@ fun SafeDriveNavigation(
 
         composable(Screen.Settings.route) {
             SettingsScreen(
-                alertManager   = alertManager,
-                onNavigateBack = { navController.popBackStack() }
+                alertManager    = alertManager,
+                decisionEngine  = inferenceEngine.decisionEngine,
+                tripDetector    = tripDetector,
+                settingsStore   = settingsStore,
+                onNavigateBack  = { navController.popBackStack() }
             )
         }
     }

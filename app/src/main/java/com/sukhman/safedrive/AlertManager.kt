@@ -1,6 +1,8 @@
 package com.sukhman.safedrive
 
 import android.content.Context
+import android.content.SharedPreferences
+import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.VibrationEffect
@@ -22,8 +24,16 @@ class AlertManager(private val context: Context) {
 
     private val TAG = "AlertManager"
 
+    companion object {
+        private const val PREFS_NAME = "safedrive_alert_stats"
+        private const val KEY_TOTAL_ALERTS = "total_alerts"
+    }
+
     private var vibrator: Vibrator? = null
     private var mediaPlayer: MediaPlayer? = null
+
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     // Alert throttling
     private var lastDistractionAlertTime = 0L
@@ -33,6 +43,10 @@ class AlertManager(private val context: Context) {
     @Volatile
     var alertsEnabled = true
 
+    // Persisted count of real (post-throttle) alerts fired this install, read by HomeScreen.
+    var totalAlerts: Int = 0
+        private set
+
     init {
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -41,6 +55,12 @@ class AlertManager(private val context: Context) {
             @Suppress("DEPRECATION")
             context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
         }
+        totalAlerts = prefs.getInt(KEY_TOTAL_ALERTS, 0)
+    }
+
+    private fun recordAlertFired() {
+        totalAlerts += 1
+        prefs.edit().putInt(KEY_TOTAL_ALERTS, totalAlerts).apply()
     }
 
     /**
@@ -56,6 +76,7 @@ class AlertManager(private val context: Context) {
         }
 
         lastDistractionAlertTime = now
+        recordAlertFired()
 
         Log.w(TAG, "DISTRACTION ALERT: $label (confidence: $confidence)")
 
@@ -83,6 +104,7 @@ class AlertManager(private val context: Context) {
         }
 
         lastDrowsinessAlertTime = now
+        recordAlertFired()
 
         Log.w(TAG, "DROWSINESS ALERT: PERCLOS=$perclos")
 
@@ -136,27 +158,40 @@ class AlertManager(private val context: Context) {
     }
 
     /**
-     * Play audio alert
+     * Play audio alert.
      *
-     * For production, you would:
-     * - Add audio files to res/raw/ (e.g., distraction_alert.mp3, drowsiness_alert.mp3)
-     * - Use MediaPlayer or TextToSpeech for voice alerts
-     *
-     * For now, we'll use system notification sounds as placeholders
+     * Drowsiness uses the alarm stream (USAGE_ALARM) so it plays even if the device's
+     * media volume is turned down — MediaPlayer.create() defaults to STREAM_MUSIC
+     * regardless of which system sound URI is passed, which would make a "drowsiness
+     * alarm" silent on a device with media volume muted.
      */
     private fun playAlert(type: AlertType) {
         try {
             // Release previous media player if exists
             mediaPlayer?.release()
 
-            // For POC, use system default notification sound
-            val soundUri = android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
-
-            mediaPlayer = MediaPlayer.create(context, soundUri)
-            mediaPlayer?.setOnCompletionListener { mp ->
-                mp.release()
+            val soundUri = when (type) {
+                AlertType.DROWSINESS -> android.provider.Settings.System.DEFAULT_ALARM_ALERT_URI
+                AlertType.DISTRACTION -> android.provider.Settings.System.DEFAULT_NOTIFICATION_URI
             }
-            mediaPlayer?.start()
+            val audioAttributes = when (type) {
+                AlertType.DROWSINESS -> AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+                AlertType.DISTRACTION -> AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            }
+
+            mediaPlayer = MediaPlayer().apply {
+                setAudioAttributes(audioAttributes)
+                setDataSource(context, soundUri)
+                setOnCompletionListener { mp -> mp.release() }
+                prepare()
+                start()
+            }
 
             Log.d(TAG, "Audio alert played: ${type.name}")
 

@@ -27,6 +27,7 @@ class CombinedDetectionEngine(
         } catch (e: Exception) {
             Log.w(TAG, "Face mesh unavailable (${e.message}) — drowsiness disabled")
         }
+        DebugState.drowsinessAvailable = faceMeshAvailable
         distractionEngine.initialize()
         Log.i(TAG, "CombinedDetectionEngine ready (faceMesh=$faceMeshAvailable)")
     }
