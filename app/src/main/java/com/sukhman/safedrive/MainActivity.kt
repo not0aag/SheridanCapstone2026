@@ -44,13 +44,14 @@ class MainActivity : ComponentActivity() {
         // Apply persisted thresholds into the live engines before monitoring starts.
         inferenceEngine.decisionEngine.perclosThreshold = settingsStore.perclosThreshold
         inferenceEngine.decisionEngine.distRateThreshold = settingsStore.distRateThreshold
+        inferenceEngine.calibrationEngine.headDeviationThresholdRad = settingsStore.headDeviationThresholdRad
         tripDetector.speedThresholdMps = settingsStore.speedThresholdKmh / 3.6
 
         lifecycleScope.launch {
             try {
                 inferenceEngine.initialize()
                 Log.i("MainActivity", "Inference engine ready")
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.e("MainActivity", "Inference engine init failed", e)
             }
         }

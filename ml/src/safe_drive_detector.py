@@ -173,7 +173,7 @@ class SafeDriveDetector:
         if self._cal_engine.is_calibrated:
             self._cal_engine.save(self._calibration_path)
             self._load_calibration()
-            print(f"[SafeDrive] Calibration saved → {self._calibration_path}")
+            print(f"[SafeDrive] Calibration saved -> {self._calibration_path}")
 
         return DetectionResult(
             phase="CALIBRATING",

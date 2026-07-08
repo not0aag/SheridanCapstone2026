@@ -3,98 +3,73 @@ package com.sukhman.safedrive.ml
 import android.content.Context
 import android.graphics.Bitmap
 import android.util.Log
+import com.google.mediapipe.framework.image.BitmapImageBuilder
+import com.google.mediapipe.tasks.core.BaseOptions
+import com.google.mediapipe.tasks.vision.core.RunningMode
+import com.google.mediapipe.tasks.vision.facelandmarker.FaceLandmarker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.tensorflow.lite.Interpreter
-import org.tensorflow.lite.support.common.FileUtil
-import org.tensorflow.lite.support.image.ImageProcessor
-import org.tensorflow.lite.support.image.TensorImage
-import org.tensorflow.lite.support.image.ops.ResizeOp
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 
 /**
- * TFLite inference engine for face landmark detection.
+ * Face landmark engine backed by the MediaPipe Tasks FaceLandmarker.
  *
- * Model: MediaPipe face_landmark.tflite (raw TFLite, not the .task bundle)
- *   Input:  float32[1, 192, 192, 3]  — RGB image normalised to [0, 1]
- *   Output 0: float32[1, 1404]       — 468 landmarks × (x, y, z), flattened
- *   Output 1: float32[1]             — face presence score
+ * This runs the full MediaPipe pipeline — BlazeFace face detection, face-region
+ * crop, then the landmark model — matching what the Python ml/ module gets from
+ * mp.solutions.face_mesh. (The landmark model alone, fed a raw full frame,
+ * cannot find a face: it is trained on detector-cropped face regions.)
  *
- * Download: https://storage.googleapis.com/mediapipe-assets/face_landmark.tflite
- * Place at:  app/src/main/assets/models/face_landmarker.tflite
+ * Model: models/face_landmarker.task
+ * Download: https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
+ *
+ * Emitted landmarks are normalised to [0, 1] relative to the input frame
+ * (x, y, z), same convention as ml/src/calibration.py and the UI overlay.
+ * The task model returns 478 points — the 468 FaceMesh points used by
+ * EarCalculator/HeadPoseMath plus 10 iris points.
  */
 class FaceMeshInferenceEngine(
     private val context: Context,
-    private val modelPath: String = "models/face_landmarker.tflite",
-    private val numThreads: Int = 4,
-    private val inputSize: Int = 192
+    private val modelPath: String = "models/face_landmarker.task"
 ) : InferenceEngine {
 
     private val TAG = "FaceMeshEngine"
 
-    private var interpreter: Interpreter? = null
-    private var imageProcessor: ImageProcessor? = null
-    private var inputBuffer: ByteBuffer? = null
-
-    // Output tensors matched to the MediaPipe face_landmark.tflite output layout.
-    // Output 0: 468 landmarks × 3 = 1404 floats, flattened (shape [1, 1404])
-    private val outputLandmarks = Array(1) { FloatArray(1404) }
-    // Output 1: face presence score (shape [1])
-    private val outputScore = FloatArray(1)
+    private var landmarker: FaceLandmarker? = null
 
     override suspend fun initialize() {
         withContext(Dispatchers.IO) {
             try {
-                val model = FileUtil.loadMappedFile(context, modelPath)
-                val options = Interpreter.Options().apply {
-                    numThreads = this@FaceMeshInferenceEngine.numThreads
-                    useNNAPI = true
-                }
-                interpreter = Interpreter(model, options)
-
-                imageProcessor = ImageProcessor.Builder()
-                    .add(ResizeOp(inputSize, inputSize, ResizeOp.ResizeMethod.BILINEAR))
+                val options = FaceLandmarker.FaceLandmarkerOptions.builder()
+                    .setBaseOptions(BaseOptions.builder().setModelAssetPath(modelPath).build())
+                    .setRunningMode(RunningMode.IMAGE)
+                    .setNumFaces(1)
+                    .setMinFaceDetectionConfidence(0.5f)
+                    .setMinFacePresenceConfidence(0.5f)
                     .build()
-
-                // float32 per channel, 3 channels (RGB), plus batch dimension handled by TFLite
-                inputBuffer = ByteBuffer.allocateDirect(inputSize * inputSize * 3 * 4).apply {
-                    order(ByteOrder.nativeOrder())
-                }
-
-                Log.i(TAG, "TFLite face mesh model loaded from $modelPath")
-            } catch (e: Exception) {
+                landmarker = FaceLandmarker.createFromOptions(context, options)
+                Log.i(TAG, "FaceLandmarker loaded from $modelPath")
+            } catch (e: Throwable) {
                 Log.e(TAG, "Failed to load model", e)
-                throw RuntimeException("Cannot load face mesh model: ${e.message}", e)
+                throw RuntimeException("Cannot load face landmarker: ${e.message}", e)
             }
         }
     }
 
     override suspend fun runInference(frame: Bitmap): InferenceResult = withContext(Dispatchers.Default) {
-        val interp = interpreter ?: return@withContext InferenceResult.NoDetection
+        val lm = landmarker ?: return@withContext InferenceResult.NoDetection
 
         try {
-            val buf = preprocessImage(frame)
+            // MediaPipe requires ARGB_8888; CameraX JPEG decode already yields it,
+            // but convert defensively in case the source config changes.
+            val input = if (frame.config == Bitmap.Config.ARGB_8888) frame
+                        else frame.copy(Bitmap.Config.ARGB_8888, false)
 
-            val inputs = arrayOf<Any>(buf)
-            val outputs = mapOf(
-                0 to outputLandmarks,
-                1 to outputScore
-            )
-            interp.runForMultipleInputsOutputs(inputs, outputs)
+            val result = lm.detect(BitmapImageBuilder(input).build())
+            val face = result.faceLandmarks().firstOrNull()
+                ?: return@withContext InferenceResult.NoDetection
 
-            if (outputScore[0] < 0.5f) return@withContext InferenceResult.NoDetection
+            val landmarks = face.map { floatArrayOf(it.x(), it.y(), it.z()) }
 
-            val flat = outputLandmarks[0]
-            val landmarks = (0 until 468).map { i ->
-                floatArrayOf(
-                    flat[i * 3] * frame.width,
-                    flat[i * 3 + 1] * frame.height,
-                    flat[i * 3 + 2]
-                )
-            }
-
-            Log.d(TAG, "Face detected (score=${outputScore[0]}), ${landmarks.size} landmarks")
+            Log.d(TAG, "Face detected, ${landmarks.size} landmarks")
             InferenceResult.FaceLandmarks(landmarks)
 
         } catch (e: Exception) {
@@ -103,30 +78,9 @@ class FaceMeshInferenceEngine(
         }
     }
 
-    private fun preprocessImage(bitmap: Bitmap): ByteBuffer {
-        val processor = imageProcessor ?: throw IllegalStateException("Processor not initialised")
-        val buf = inputBuffer ?: throw IllegalStateException("Input buffer not initialised")
-
-        val tensorImage = TensorImage.fromBitmap(bitmap)
-        val processed = processor.process(tensorImage)
-
-        buf.rewind()
-        val pixels = IntArray(inputSize * inputSize)
-        processed.bitmap.getPixels(pixels, 0, inputSize, 0, 0, inputSize, inputSize)
-        for (pixel in pixels) {
-            buf.putFloat(((pixel shr 16) and 0xFF) / 255f) // R
-            buf.putFloat(((pixel shr 8) and 0xFF) / 255f)  // G
-            buf.putFloat((pixel and 0xFF) / 255f)           // B
-        }
-        buf.rewind()
-        return buf
-    }
-
     override fun close() {
-        interpreter?.close()
-        interpreter = null
-        imageProcessor = null
-        inputBuffer = null
-        Log.i(TAG, "TFLite interpreter closed")
+        landmarker?.close()
+        landmarker = null
+        Log.i(TAG, "FaceLandmarker closed")
     }
 }

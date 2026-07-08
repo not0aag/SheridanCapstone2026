@@ -78,12 +78,26 @@ python3.10 -m venv safedrive_ml
 safedrive_ml/bin/pip install -r ml/requirements.txt
 ```
 
-> **macOS only:** `tflite-runtime` has no Python 3.10 wheel for macOS, so `tensorflow-macos`
-> is used instead. On Linux or Windows you can replace `tensorflow-macos` in
-> `ml/requirements.txt` with `tensorflow` and re-run pip install.
+**Windows:** no Python 3.10 wheel is required — 3.11 works fine:
+
+```powershell
+py -3.11 -m venv safedrive_ml
+safedrive_ml\Scripts\pip install -r ml/requirements.txt
+```
+
+`ml/requirements.txt` already selects `tensorflow` instead of `tensorflow-macos`
+on non-macOS platforms automatically (via environment markers) — no manual edits needed.
 
 The venv is named `safedrive_ml/` so all commands in this README work as-is.
 It is gitignored — every team member creates their own copy locally.
+
+### Multiple camera devices (Windows)
+
+If your machine has more than one camera registered — a phone-as-webcam app
+(Iriun, DroidCam), a virtual cam (OBS, NVIDIA Broadcast), etc. — `demo_unified.py`
+auto-skips known virtual devices and verifies the first frame isn't black
+before using a camera. Run `... demo_unified.py --list-cameras` to see all
+detected devices, then `--camera-index N` to force a specific one.
 
 ---
 
@@ -100,6 +114,10 @@ safedrive_ml/bin/python3.10 ml/src/demo_unified.py --recal
 safedrive_ml/bin/python3.10 ml/src/demo_unified.py \
     --model ml-models/week3_finetuning/tflite_models/class_weights_model_91pct.tflite \
     --cal   calibration.json
+
+# List detected cameras, or force a specific one (see "Multiple camera devices" above):
+safedrive_ml/bin/python3.10 ml/src/demo_unified.py --list-cameras
+safedrive_ml/bin/python3.10 ml/src/demo_unified.py --camera-index 1
 ```
 
 During the demo:
@@ -152,9 +170,11 @@ safedrive_ml/bin/python3.10 -m pytest ml/tests/ -v
 ```
 mediapipe==0.10.8    # FaceMesh — must pin this version; 0.10.9+ removed mp.solutions
 opencv-python        # Frame capture and image preprocessing
-tensorflow-macos     # TFLite inference on macOS (2.14.0)
-numpy<2.0            # Required by tensorflow-macos 2.14 — NumPy 2.x breaks it
+tensorflow-macos     # TFLite inference on macOS (2.14.0); tensorflow on other platforms
+numpy<2.0            # Required by tensorflow(-macos) 2.14 — NumPy 2.x breaks it
+scipy                # EAR distance calculations in calibration.py
 pytest               # Test runner
+pygrabber            # Windows only — camera device names for demo_unified.py
 ```
 
 > `tflite-runtime` has no Python 3.10 wheel for macOS. Use `tensorflow-macos` instead.  

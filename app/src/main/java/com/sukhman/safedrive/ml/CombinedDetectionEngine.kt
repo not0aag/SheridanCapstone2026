@@ -24,7 +24,9 @@ class CombinedDetectionEngine(
             faceMeshEngine.initialize()
             faceMeshAvailable = true
             Log.i(TAG, "Face mesh ready")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            // Throwable, not Exception: a missing native lib surfaces as
+            // UnsatisfiedLinkError and must degrade, not crash the app.
             Log.w(TAG, "Face mesh unavailable (${e.message}) — drowsiness disabled")
         }
         DebugState.drowsinessAvailable = faceMeshAvailable
@@ -38,6 +40,7 @@ class CombinedDetectionEngine(
         val isDistracted = distractionResult is InferenceResult.Distraction
 
         var earValue = 0f
+        var headNormal: FloatArray? = null
         var landmarksResult: InferenceResult? = null
 
         if (faceMeshAvailable) {
@@ -45,6 +48,7 @@ class CombinedDetectionEngine(
             if (meshResult is InferenceResult.FaceLandmarks) {
                 landmarksResult = meshResult
                 earValue = EarCalculator.compute(meshResult.landmarks)
+                headNormal = HeadPoseMath.computeFaceNormal(meshResult.landmarks)
                 DebugState.earValue = earValue
                 DebugState.eyesClosed = calibrationEngine.isEyesClosed(earValue)
                 DebugState.faceLandmarks = meshResult.landmarks
@@ -53,10 +57,10 @@ class CombinedDetectionEngine(
             }
         }
 
-        // Calibration mode — collect EAR samples, don't alert
+        // Calibration mode — collect EAR + head-pose samples, don't alert
         if (calibrationEngine.isCalibrating) {
             if (earValue > 0f) {
-                val done = calibrationEngine.addFrame(earValue)
+                val done = calibrationEngine.addFrame(earValue, headNormal)
                 DebugState.calibrationProgress = calibrationEngine.progress
                 if (done) DebugState.isCalibrated = true
             }
@@ -66,7 +70,8 @@ class CombinedDetectionEngine(
         // Detection mode
         if (faceMeshAvailable && earValue > 0f) {
             val eyesClosed = calibrationEngine.isEyesClosed(earValue)
-            decisionEngine.addFrame(eyesClosed, isDistracted)
+            val headDeviated = calibrationEngine.isHeadDeviated(headNormal)
+            decisionEngine.addFrame(eyesClosed, isDistracted, headDeviated)
             val decision = decisionEngine.getDecision()
             DebugState.perclosPct = decision.perclosPct
 
