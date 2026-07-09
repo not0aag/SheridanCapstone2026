@@ -3,39 +3,43 @@ package com.sukhman.safedrive.ml
 class AndroidDecisionEngine {
 
     companion object {
-        private const val DISTRACTION_WINDOW   = 25    // frames
-        private const val DROWSY_WINDOW_MS     = 4_000L
+        private const val DISTRACTION_WINDOW = 25      // frames
+        private const val DROWSY_WINDOW_MS   = 4_000L
     }
 
-    // Mutable + volatile: read on the background inference coroutine (via
-    // FrameAnalyzer/Dispatchers.Default), written from Compose/main when the
-    // user moves a Settings slider. Same pattern as AlertManager.alertsEnabled.
-    @Volatile
-    var perclosThreshold: Double = 30.0     // % of window eyes closed
-    @Volatile
-    var distRateThreshold: Double = 0.40    // fraction of last 25 frames distracted
+    // User-tunable via Settings sliders. @Volatile so the inference coroutine
+    // always reads the latest value written from the main/Compose thread.
+    @Volatile var perclosThreshold:  Double = 30.0   // % of window eyes closed
+    @Volatile var distRateThreshold: Double = 0.40   // fraction of last 25 frames classifier non-safe
+    @Volatile var headRateThreshold: Double = 0.60   // fraction of last 25 frames head deviated
 
-    data class Frame(val timestampMs: Long, val eyesClosed: Boolean, val isDistracted: Boolean)
+    data class Frame(
+        val timestampMs:  Long,
+        val eyesClosed:   Boolean,
+        val headDeviated: Boolean,
+        val isDistracted: Boolean
+    )
 
     data class Decision(
-        val alert: Boolean,
-        val alertType: String,   // "DROWSY", "DISTRACTED", or ""
-        val perclosPct: Float,
+        val alert:          Boolean,
+        val alertType:      String,
+        val perclosPct:     Float,
+        val headAlertRate:  Float,
         val distractionRate: Float
     )
 
     private val frames = ArrayDeque<Frame>()
     private var firstFrameMs = -1L
 
-    fun addFrame(eyesClosed: Boolean, isDistracted: Boolean) {
+    fun addFrame(eyesClosed: Boolean, headDeviated: Boolean, isDistracted: Boolean) {
         val now = System.currentTimeMillis()
         if (firstFrameMs < 0) firstFrameMs = now
-        frames.addLast(Frame(now, eyesClosed, isDistracted))
+        frames.addLast(Frame(now, eyesClosed, headDeviated, isDistracted))
         prune(now)
     }
 
     fun getDecision(): Decision {
-        if (frames.isEmpty()) return Decision(false, "", 0f, 0f)
+        if (frames.isEmpty()) return Decision(false, "", 0f, 0f, 0f)
 
         val now = System.currentTimeMillis()
         val totalElapsedMs = if (firstFrameMs > 0) now - firstFrameMs else 0L
@@ -43,19 +47,23 @@ class AndroidDecisionEngine {
         // PERCLOS — all frames in the 4-second window
         val perclosPct = frames.count { it.eyesClosed } * 100f / frames.size
 
-        // Distraction rate — last 25 frames only
+        // Distraction signals — last 25 frames only
         val recent = if (frames.size > DISTRACTION_WINDOW)
             frames.toList().takeLast(DISTRACTION_WINDOW) else frames.toList()
-        val distractionRate = if (recent.isNotEmpty())
-            recent.count { it.isDistracted }.toFloat() / recent.size else 0f
 
+        val headAlertRate   = if (recent.isNotEmpty()) recent.count { it.headDeviated }.toFloat() / recent.size else 0f
+        val distractionRate = if (recent.isNotEmpty()) recent.count { it.isDistracted }.toFloat() / recent.size else 0f
+
+        // DROWSY — gated by minimum 4-second window
         val isDrowsy = totalElapsedMs >= DROWSY_WINDOW_MS && perclosPct > perclosThreshold
-        val isDistracted = distractionRate > distRateThreshold
+
+        // DISTRACTED — requires BOTH head deviation AND classifier to agree
+        val isDistracted = headAlertRate > headRateThreshold && distractionRate > distRateThreshold
 
         return when {
-            isDrowsy    -> Decision(true, "DROWSY",      perclosPct, distractionRate)
-            isDistracted -> Decision(true, "DISTRACTED", perclosPct, distractionRate)
-            else         -> Decision(false, "",           perclosPct, distractionRate)
+            isDrowsy     -> Decision(true,  "DROWSY",     perclosPct, headAlertRate, distractionRate)
+            isDistracted -> Decision(true,  "DISTRACTED", perclosPct, headAlertRate, distractionRate)
+            else         -> Decision(false, "",            perclosPct, headAlertRate, distractionRate)
         }
     }
 

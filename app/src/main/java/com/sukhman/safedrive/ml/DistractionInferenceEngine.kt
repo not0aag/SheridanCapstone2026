@@ -40,7 +40,7 @@ class DistractionInferenceEngine(
     private val context: Context,
     private val modelPath: String = "models/distraction_classifier.tflite",
     private val numThreads: Int = 4,
-    private val confidenceThreshold: Float = 0.55f
+    private val confidenceThreshold: Float = 0.60f
 ) : InferenceEngine {
 
     companion object {

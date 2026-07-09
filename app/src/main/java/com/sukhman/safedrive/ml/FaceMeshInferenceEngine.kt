@@ -37,11 +37,10 @@ class FaceMeshInferenceEngine(
     private var imageProcessor: ImageProcessor? = null
     private var inputBuffer: ByteBuffer? = null
 
-    // Output tensors matched to the MediaPipe face_landmark.tflite output layout.
-    // Output 0: 468 landmarks × 3 = 1404 floats, flattened (shape [1, 1404])
-    private val outputLandmarks = Array(1) { FloatArray(1404) }
-    // Output 1: face presence score (shape [1])
-    private val outputScore = FloatArray(1)
+    // Output 0: shape [1, 1, 1, 1404] — 468 landmarks × 3 floats, nested 4-D
+    private val outputLandmarks = Array(1) { Array(1) { Array(1) { FloatArray(1404) } } }
+    // Output 1: face presence score (shape [1, 1, 1, 1] — same 4-D nesting as landmarks)
+    private val outputScore = Array(1) { Array(1) { Array(1) { FloatArray(1) } } }
 
     override suspend fun initialize() {
         withContext(Dispatchers.IO) {
@@ -83,12 +82,12 @@ class FaceMeshInferenceEngine(
             )
             interp.runForMultipleInputsOutputs(inputs, outputs)
 
-            if (outputScore[0] < 0.5f) return@withContext InferenceResult.NoDetection
+            if (outputScore[0][0][0][0] < 0.5f) return@withContext InferenceResult.NoDetection
 
-            val flat = outputLandmarks[0]
+            val flat = outputLandmarks[0][0][0]  // unwrap [1,1,1,1404] → FloatArray(1404)
             val landmarks = (0 until 468).map { i ->
                 floatArrayOf(
-                    flat[i * 3] * frame.width,
+                    flat[i * 3]     * frame.width,
                     flat[i * 3 + 1] * frame.height,
                     flat[i * 3 + 2]
                 )

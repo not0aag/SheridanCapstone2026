@@ -80,6 +80,15 @@ fun CalibrationScreen(
         }
     }
 
+    // Drive the progress bar from the calibration engine's elapsed time every 100ms
+    LaunchedEffect(started) {
+        if (!started) return@LaunchedEffect
+        while (inferenceEngine.calibrationEngine.isCalibrating) {
+            DebugState.calibrationProgress = inferenceEngine.calibrationEngine.progress
+            kotlinx.coroutines.delay(100)
+        }
+    }
+
     // Navigate away as soon as calibration is marked complete
     LaunchedEffect(isComplete) {
         if (isComplete) {
