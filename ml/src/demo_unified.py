@@ -8,13 +8,23 @@ Usage (from repo root):
     safedrive_ml/bin/python3.10 ml/src/demo_unified.py
 
 Optional args:
-    --model      path to TFLite model  (default: ml-models/week3_finetuning/tflite_models/class_weights_model_91pct.tflite)
-    --cal        path to calibration.json (default: calibration.json)
-    --recal      force recalibration even if calibration.json already exists
+    --model         path to TFLite model  (default: ml-models/week3_finetuning/tflite_models/class_weights_model_91pct.tflite)
+    --cal           path to calibration.json (default: calibration.json)
+    --recal         force recalibration even if calibration.json already exists
+    --camera-index  force a specific camera device instead of auto-detecting
+    --list-cameras  print detected camera devices and exit
 
 Keys during demo:
     R    — force recalibration (delete current calibration and restart)
     Q / ESC — quit
+
+Camera selection:
+    Dev machines often have more than one camera device registered — e.g.
+    phone-as-webcam apps (Iriun, DroidCam) or virtual cams (OBS, NVIDIA
+    Broadcast) alongside the real one, and cv2.VideoCapture(0) has no
+    guarantee of picking the physical webcam. This script auto-detects by
+    skipping known virtual-camera names and verifying the first frame isn't
+    black before use; pass --camera-index to override.
 """
 
 import argparse
@@ -27,6 +37,89 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).parent))
 from safe_drive_detector import SafeDriveDetector, DetectionResult
+
+# Name fragments (case-insensitive) of virtual/phone-as-webcam devices to skip
+# during auto-detection — these commonly enumerate before the real webcam and
+# show a solid black frame when nothing is actively streaming to them.
+_VIRTUAL_CAMERA_NAME_PATTERNS = (
+    "iriun", "droidcam", "epoccam", "obs virtual", "virtual camera", "broadcast",
+)
+
+_BLACK_FRAME_BRIGHTNESS_THRESHOLD = 10.0  # mean pixel value below this ~= black
+
+
+def _dshow_device_names():
+    """Ordered DirectShow device names (Windows only, matches CAP_DSHOW indices)."""
+    if sys.platform != "win32":
+        return None
+    try:
+        from pygrabber.dshow_graph import FilterGraph
+        return FilterGraph().get_input_devices()
+    except Exception:
+        return None
+
+
+_WARMUP_FRAMES = 15  # real UVC webcams need ~1-1.5s for auto-exposure to ramp up
+
+
+def _frame_brightness(cap) -> float:
+    """Read (and discard) warm-up frames, returning the brightness of the
+    last one — a webcam's very first frame after opening is often dark/black
+    while auto-exposure is still converging, which looks identical to a dead
+    virtual camera if checked immediately."""
+    brightness = -1.0
+    for _ in range(_WARMUP_FRAMES):
+        ok, frame = cap.read()
+        brightness = float(np.mean(frame)) if ok and frame is not None else -1.0
+    return brightness
+
+
+def select_camera(explicit_index=None):
+    """Open a real camera, skipping virtual/phone-as-webcam devices by name
+    and verifying the feed isn't black after auto-exposure warm-up, instead
+    of blindly trusting index 0 (see module docstring)."""
+    backend = cv2.CAP_DSHOW if sys.platform == "win32" else cv2.CAP_ANY
+    names = _dshow_device_names()
+
+    if explicit_index is not None:
+        cap = cv2.VideoCapture(explicit_index, backend)
+        if not cap.isOpened():
+            print(f"[SafeDrive] ERROR: Could not open camera index {explicit_index}.")
+            sys.exit(1)
+        label = names[explicit_index] if names and explicit_index < len(names) else "unknown"
+        print(f"[SafeDrive] Using camera {explicit_index} ({label}) — forced via --camera-index.")
+        return cap
+
+    if names:
+        print(f"[SafeDrive] Cameras detected: {list(enumerate(names))}")
+
+    candidates = range(len(names)) if names else range(5)
+    skipped, probed = [], []
+    for i in candidates:
+        name = names[i] if names else "unknown"
+        if names and any(p in name.lower() for p in _VIRTUAL_CAMERA_NAME_PATTERNS):
+            skipped.append((i, name))
+            continue
+        cap = cv2.VideoCapture(i, backend)
+        if not cap.isOpened():
+            continue
+        brightness = _frame_brightness(cap)
+        probed.append((i, name, brightness))
+        if brightness > _BLACK_FRAME_BRIGHTNESS_THRESHOLD:
+            print(f"[SafeDrive] Using camera {i} ({name}).")
+            return cap
+        cap.release()
+
+    print("[SafeDrive] ERROR: No working (non-black) camera found.")
+    if skipped:
+        print(f"[SafeDrive]   Skipped as virtual cameras: {skipped}")
+    if probed:
+        print(f"[SafeDrive]   Probed and rejected (black): "
+              f"{[(i, n, f'{b:.1f}') for i, n, b in probed]}")
+    print("[SafeDrive] If you're using a phone-as-webcam app, make sure it's "
+          "open and actively streaming. Run with --list-cameras to see all "
+          "devices, then --camera-index N to force one.")
+    sys.exit(1)
 
 # ---------------------------------------------------------------------------
 # Colours (BGR)
@@ -136,6 +229,12 @@ def draw_detection(frame, result: DetectionResult):
 
 
 def main():
+    # Windows consoles default to a legacy codepage (e.g. cp1252) that can't
+    # encode characters like the arrows used in some pipeline log messages;
+    # force UTF-8 stdout so those prints don't crash the demo mid-run.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="SafeDrive unified demo")
     parser.add_argument(
         "--model",
@@ -144,18 +243,28 @@ def main():
     parser.add_argument("--cal",    default="calibration.json")
     parser.add_argument("--recal",  action="store_true",
                         help="Force recalibration even if calibration.json exists")
+    parser.add_argument("--camera-index", type=int, default=None,
+                        help="Force a specific camera device instead of auto-detecting")
+    parser.add_argument("--list-cameras", action="store_true",
+                        help="Print detected camera devices and exit")
     args = parser.parse_args()
+
+    if args.list_cameras:
+        names = _dshow_device_names()
+        if names:
+            for i, n in enumerate(names):
+                print(f"{i}: {n}")
+        else:
+            print("[SafeDrive] Device names unavailable on this platform "
+                  "(install pygrabber on Windows); try indices 0-4 with --camera-index.")
+        return
 
     if args.recal and Path(args.cal).exists():
         os.remove(args.cal)
         print(f"[SafeDrive] Deleted {args.cal} — will recalibrate.")
 
     detector = SafeDriveDetector(model_path=args.model, calibration_path=args.cal)
-    cap      = cv2.VideoCapture(0)
-
-    if not cap.isOpened():
-        print("[SafeDrive] ERROR: Could not open webcam.")
-        sys.exit(1)
+    cap      = select_camera(explicit_index=args.camera_index)
 
     print("[SafeDrive] Running — press Q or ESC to quit, R to recalibrate.")
 

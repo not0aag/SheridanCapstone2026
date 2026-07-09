@@ -24,7 +24,9 @@ class CombinedDetectionEngine(
             faceMeshEngine.initialize()
             faceMeshAvailable = true
             Log.i(TAG, "Face mesh ready")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            // Throwable, not Exception: a missing native lib surfaces as
+            // UnsatisfiedLinkError and must degrade, not crash the app.
             Log.w(TAG, "Face mesh unavailable (${e.message}) — drowsiness disabled")
         }
         DebugState.drowsinessAvailable = faceMeshAvailable
@@ -38,7 +40,7 @@ class CombinedDetectionEngine(
         val isDistracted = distractionResult is InferenceResult.Distraction
 
         var earValue = 0f
-        var headMetrics: HeadPoseCalculator.HeadMetrics? = null
+        var headNormal: FloatArray? = null
         var landmarksResult: InferenceResult? = null
 
         if (faceMeshAvailable) {
@@ -46,7 +48,7 @@ class CombinedDetectionEngine(
             if (meshResult is InferenceResult.FaceLandmarks) {
                 landmarksResult = meshResult
                 earValue = EarCalculator.compute(meshResult.landmarks)
-                headMetrics = HeadPoseCalculator.compute(meshResult.landmarks)
+                headNormal = HeadPoseMath.computeFaceNormal(meshResult.landmarks)
                 DebugState.earValue = earValue
                 DebugState.eyesClosed = calibrationEngine.isEyesClosed(earValue)
                 DebugState.faceLandmarks = meshResult.landmarks
@@ -55,31 +57,31 @@ class CombinedDetectionEngine(
             }
         }
 
-        // Calibration mode — always tick the timer; collect EAR + head pose when face is visible
+        // Calibration mode — collect EAR + head-pose samples, don't alert
         if (calibrationEngine.isCalibrating) {
-            val done = calibrationEngine.addFrame(earValue, headMetrics)
-            DebugState.calibrationProgress = calibrationEngine.progress
-            if (done) DebugState.isCalibrated = true
+            if (earValue > 0f) {
+                val done = calibrationEngine.addFrame(earValue, headNormal)
+                DebugState.calibrationProgress = calibrationEngine.progress
+                if (done) DebugState.isCalibrated = true
+            }
             return landmarksResult ?: InferenceResult.NoDetection
         }
 
         // Detection mode
         if (faceMeshAvailable && earValue > 0f) {
-            // Face detected — use two-signal approach: BOTH head deviation AND classifier must agree
             val eyesClosed = calibrationEngine.isEyesClosed(earValue)
-            val headDeviated = if (headMetrics != null) calibrationEngine.isHeadDeviated(headMetrics) else false
-            decisionEngine.addFrame(eyesClosed, headDeviated, isDistracted)
+            val headDeviated = calibrationEngine.isHeadDeviated(headNormal)
+            decisionEngine.addFrame(eyesClosed, isDistracted, headDeviated)
             val decision = decisionEngine.getDecision()
             DebugState.perclosPct = decision.perclosPct
 
-            return when (decision.alertType) {
-                "DROWSY"     -> InferenceResult.Drowsiness(decision.perclosPct)
-                "DISTRACTED" -> distractionResult
-                else         -> InferenceResult.NoDetection
+            return when {
+                decision.alertType == "DROWSY"      -> InferenceResult.Drowsiness(decision.perclosPct)
+                decision.alertType == "DISTRACTED"  -> distractionResult
+                else                                -> distractionResult
             }
         }
 
-        // Face not detected by face mesh (emulator / no face in frame) — fall back to classifier only
         return distractionResult
     }
 

@@ -4,6 +4,10 @@
 #   python3.10 -m venv safedrive_ml
 #   safedrive_ml/bin/pip install -r ml/requirements.txt
 #
+# Windows setup (no Python 3.10 wheel required — 3.11 works fine):
+#   py -3.11 -m venv safedrive_ml
+#   safedrive_ml/Scripts/pip install -r ml/requirements.txt
+#
 # Note: mediapipe must be pinned to 0.10.8.
 #   0.10.9+ removed the mp.solutions API used by FaceMesh.
 #
@@ -15,7 +19,15 @@ mediapipe==0.10.8
 opencv-python>=4.8.0
 numpy<2.0
 pytest>=7.0
+scipy>=1.10.0    # used by calibration.py (scipy.spatial.distance for EAR)
 
-# macOS TFLite runtime — tflite-runtime has no Python 3.10 wheel for macOS.
-# Use full tensorflow-macos instead. On Android, use the tflite AAR via Gradle.
-tensorflow-macos==2.14.0
+# TFLite runtime — tflite-runtime has no Python 3.10 wheel for macOS, and no
+# Windows wheel at all, so both platforms use full tensorflow instead.
+# On Android, use the tflite AAR via Gradle.
+tensorflow-macos==2.14.0 ; sys_platform == "darwin"
+tensorflow==2.14.0 ; sys_platform != "darwin"
+
+# Windows only — lets demo_unified.py resolve cameras by DirectShow device
+# name (skipping virtual/phone-as-webcam devices like Iriun) instead of
+# guessing by index. Optional: falls back to index probing if absent.
+pygrabber ; sys_platform == "win32"

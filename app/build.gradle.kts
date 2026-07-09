@@ -64,7 +64,14 @@ dependencies {
     // Play Services Location
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
-    // TensorFlow Lite (face mesh inference)
+    // MediaPipe Tasks — full face landmark pipeline (detector + crop + landmarks),
+    // same pipeline the Python ml/ module uses via mp.solutions.face_mesh
+    // 0.10.15+ ships x86_64 natives (via tasks-core) — required for emulators;
+    // 0.10.14 and older only bundled arm64-v8a/armeabi-v7a/x86 and crashes
+    // with UnsatisfiedLinkError on x86_64 AVDs.
+    implementation("com.google.mediapipe:tasks-vision:0.10.35")
+
+    // TensorFlow Lite (distraction classifier inference)
     implementation("org.tensorflow:tensorflow-lite:2.16.1")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")

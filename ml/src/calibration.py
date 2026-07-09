@@ -243,7 +243,7 @@ def run_webcam_calibration(output_path="calibration.json"):
     mp_face_mesh = mp.solutions.face_mesh
     engine = CalibrationEngine()
 
-    print(f"[SafeDrive] Starting calibration. Output → {output_path}")
+    print(f"[SafeDrive] Starting calibration. Output -> {output_path}")
     print("[SafeDrive] Mount your phone, then press SPACE to begin.")
     print("[SafeDrive] Look straight ahead at the road during calibration.")
     print("[SafeDrive] Press Q to quit.")
