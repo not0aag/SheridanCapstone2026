@@ -1,0 +1,59 @@
+# XcodeGen spec. The generated SafeDriveAI.xcodeproj is committed, so you only
+# need this if you add/remove files: `brew install xcodegen && xcodegen`.
+name: SafeDriveAI
+options:
+  bundleIdPrefix: ca.sheridan.capstone
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+
+targets:
+  SafeDriveAI:
+    type: application
+    platform: iOS
+    sources:
+      - path: SafeDriveAI
+    info:
+      path: SafeDriveAI/Info.plist
+      properties:
+        CFBundleDisplayName: SafeDrive AI
+        NSCameraUsageDescription: >-
+          SafeDrive AI uses the front camera to detect drowsiness and
+          distraction while you drive. All analysis happens on this phone —
+          no video is stored or transmitted.
+        NSLocationWhenInUseUsageDescription: >-
+          Your speed is used only to pause monitoring while you are stopped or
+          parked. Enable this if you set a speed threshold in Settings.
+        UIBackgroundModes: [audio]
+        UIRequiredDeviceCapabilities: [front-facing-camera]
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UILaunchScreen: {}
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+        TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_STYLE: Automatic
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+
+  SafeDriveAITests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SafeDriveAITests
+    dependencies:
+      - target: SafeDriveAI
+    settings:
+      base:
+        SWIFT_VERSION: "5.9"
+
+schemes:
+  SafeDriveAI:
+    build:
+      targets:
+        SafeDriveAI: all
+        SafeDriveAITests: [test]
+    test:
+      targets:
+        - SafeDriveAITests

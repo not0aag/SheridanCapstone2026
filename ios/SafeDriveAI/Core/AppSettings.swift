@@ -1,0 +1,45 @@
+import Foundation
+import Combine
+
+/// User-tunable settings, persisted to UserDefaults. The detection engine
+/// reads derived thresholds from here on every frame, so slider changes take
+/// effect immediately — no restart, no re-arming.
+final class AppSettings: ObservableObject {
+    private let defaults: UserDefaults
+
+    /// 0 (lenient) ... 1 (sensitive). Mapped to a PERCLOS threshold.
+    @Published var drowsinessSensitivity: Double {
+        didSet { defaults.set(drowsinessSensitivity, forKey: "drowsinessSensitivity") }
+    }
+    /// 0 (lenient) ... 1 (sensitive). Mapped to head/gaze deviation limits.
+    @Published var distractionSensitivity: Double {
+        didSet { defaults.set(distractionSensitivity, forKey: "distractionSensitivity") }
+    }
+    @Published var soundEnabled: Bool {
+        didSet { defaults.set(soundEnabled, forKey: "soundEnabled") }
+    }
+    /// km/h below which monitoring pauses. 0 = always monitor (GPS unused).
+    @Published var speedThresholdKmh: Double {
+        didSet { defaults.set(speedThresholdKmh, forKey: "speedThresholdKmh") }
+    }
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        drowsinessSensitivity = defaults.object(forKey: "drowsinessSensitivity") as? Double ?? 0.5
+        distractionSensitivity = defaults.object(forKey: "distractionSensitivity") as? Double ?? 0.5
+        soundEnabled = defaults.object(forKey: "soundEnabled") as? Bool ?? true
+        speedThresholdKmh = defaults.object(forKey: "speedThresholdKmh") as? Double ?? 0
+    }
+
+    // MARK: Derived thresholds (single source of truth for the engine)
+
+    /// PERCLOS threshold: sensitive 0.20 ... lenient 0.45, default 0.325.
+    var perclosThreshold: Double { 0.45 - drowsinessSensitivity * 0.25 }
+
+    /// Head deviation (radians) considered "looking away":
+    /// sensitive ≈14° ... lenient ≈29°.
+    var headDeviationRadians: Float { Float(0.50 - distractionSensitivity * 0.25) }
+
+    /// Gaze offset (fraction of eye width) considered "eyes off road".
+    var gazeDeviationThreshold: Float { Float(0.30 - distractionSensitivity * 0.14) }
+}
