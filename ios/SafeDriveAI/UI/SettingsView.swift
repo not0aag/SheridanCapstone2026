@@ -31,6 +31,15 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Toggle("Text trusted contacts when distracted", isOn: $settings.smsAlertsEnabled)
+                    NavigationLink("Manage Trusted Contacts") { ContactsView() }
+                } header: {
+                    Text("Emergency Alerts")
+                } footer: {
+                    Text("When enabled, a text message is sent to your trusted contacts if you're detected as continuously distracted for about 10 seconds. This requires a network connection and a SafeDrive AI account.")
+                }
+
+                Section {
                     Toggle("Show debug overlay", isOn: $settings.debugOverlayEnabled)
                 } footer: {
                     Text("Shows live yaw/pitch/gaze numbers on the monitoring screen — for tuning thresholds, not for driving with.")
@@ -78,7 +87,7 @@ struct SettingsView: View {
 
                 Section("About") {
                     LabeledContent("Version", value: appVersion)
-                    Text("SafeDrive AI monitors for drowsiness and distraction using the front camera. All analysis runs on-device with Apple's Vision framework. No video or biometric data is stored or transmitted.")
+                    Text("SafeDrive AI monitors for drowsiness and distraction using the front camera. All analysis runs on-device with Apple's Vision framework. No video or biometric data is stored or transmitted. If you enable Emergency Alerts, a text notification (no video, images, or biometric data) is sent to your chosen contacts when prolonged distraction is detected.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }

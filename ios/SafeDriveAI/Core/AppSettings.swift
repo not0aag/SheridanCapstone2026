@@ -28,6 +28,11 @@ final class AppSettings: ObservableObject {
     @Published var debugOverlayEnabled: Bool {
         didSet { defaults.set(debugOverlayEnabled, forKey: "debugOverlayEnabled") }
     }
+    /// Opt-in: text trusted contacts when prolonged distraction is detected.
+    /// Defaults to off, since enabling it sends data off-device.
+    @Published var smsAlertsEnabled: Bool {
+        didSet { defaults.set(smsAlertsEnabled, forKey: "smsAlertsEnabled") }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -36,6 +41,7 @@ final class AppSettings: ObservableObject {
         soundEnabled = defaults.object(forKey: "soundEnabled") as? Bool ?? true
         speedThresholdKmh = defaults.object(forKey: "speedThresholdKmh") as? Double ?? 0
         debugOverlayEnabled = defaults.object(forKey: "debugOverlayEnabled") as? Bool ?? false
+        smsAlertsEnabled = defaults.object(forKey: "smsAlertsEnabled") as? Bool ?? false
     }
 
     // MARK: Derived thresholds (single source of truth for the engine)

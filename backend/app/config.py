@@ -14,7 +14,13 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
     AWS_REGION: str = "us-east-1"
-    
+
+    # Twilio settings (SMS alerts to trusted contacts). Empty values fall
+    # back to a dry-run mode in app.services.notifications.
+    TWILIO_ACCOUNT_SID: str = ""
+    TWILIO_AUTH_TOKEN: str = ""
+    TWILIO_PHONE_NUMBER: str = ""
+
     class Config:
         env_file = ".env"
 

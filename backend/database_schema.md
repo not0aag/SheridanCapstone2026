@@ -74,11 +74,44 @@ Stores video file metadata and S3 references.
 
 ---
 
+### 5. emergency_contacts
+Stores a driver's trusted contacts who receive distraction SMS alerts. Contacts do not need their own SafeDrive AI account.
+
+| Column Name | Data Type | Constraints | Description |
+|------------|-----------|-------------|-------------|
+| id | SERIAL | PRIMARY KEY | Unique contact ID |
+| user_id | INTEGER | FOREIGN KEY (users.id) | Driver who saved this contact |
+| name | VARCHAR(255) | NOT NULL | Contact's display name |
+| phone_number | VARCHAR(20) | NOT NULL | Contact's phone number (SMS destination) |
+| email | VARCHAR(255) | NULL | Optional contact email |
+| relationship | VARCHAR(50) | NULL | Optional label (e.g. "spouse", "parent") |
+| created_at | TIMESTAMP | DEFAULT NOW() | Record creation timestamp |
+| updated_at | TIMESTAMP | DEFAULT NOW() | Last update timestamp |
+
+---
+
+### 6. distraction_alerts
+Audit log of prolonged-distraction SMS alerts sent to a driver's contacts; also used as a durable rate-limit floor.
+
+| Column Name | Data Type | Constraints | Description |
+|------------|-----------|-------------|-------------|
+| id | SERIAL | PRIMARY KEY | Unique alert ID |
+| user_id | INTEGER | FOREIGN KEY (users.id) | Driver who triggered the alert |
+| trip_id | INTEGER | FOREIGN KEY (trips.id), NULL | Related trip, if known |
+| latitude | DECIMAL(10,8) | NULL | GPS latitude at time of alert |
+| longitude | DECIMAL(11,8) | NULL | GPS longitude at time of alert |
+| contacts_notified | INTEGER | NOT NULL, DEFAULT 0 | Number of contacts texted |
+| sent_at | TIMESTAMP | DEFAULT NOW() | When the alert was sent |
+
+---
+
 ## Relationships
 
 - **users → trips**: One user can have many trips (1:N)
 - **trips → incidents**: One trip can have many incidents (1:N)
 - **incidents → videos**: One incident can have one video (1:1)
+- **users → emergency_contacts**: One user can have many trusted contacts (1:N)
+- **users → distraction_alerts**: One user can have many distraction alerts (1:N)
 
 ---
 
@@ -88,6 +121,9 @@ Stores video file metadata and S3 references.
 - `trips.user_id` - Fast trip queries by user
 - `incidents.trip_id` - Fast incident queries by trip
 - `videos.incident_id` - Fast video lookup by incident
+- `emergency_contacts.user_id` - Fast contact lookup by owning user
+- `distraction_alerts.user_id` - Fast alert history lookup by user
+- `distraction_alerts.sent_at` - Fast lookup of most recent alert for rate limiting
 
 ---
 
@@ -97,3 +133,4 @@ Stores video file metadata and S3 references.
 - Password is hashed using bcrypt before storage
 - Videos are stored in AWS S3, only metadata in database
 - Safety scores calculated based on incident count and severity
+- Distraction SMS alerts are sent via Twilio; `emergency_contacts` rows do not require the contact to be a registered SafeDrive AI user

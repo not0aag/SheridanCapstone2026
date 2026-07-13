@@ -7,9 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		19489D44A3EB0CC6B6A2B110 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0F5A864ABD2DE283C632B52 /* AccountView.swift */; };
 		23AF5DB27BB12E2A782A85EF /* SafeDriveAIApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E428CF4F4CFA39C22C71CEE /* SafeDriveAIApp.swift */; };
 		24D7F89E0FFC436ADCA43315 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60F3B73AA9FF72DA88F1131A /* OnboardingView.swift */; };
 		317F9CFCBE2DCF5D4E228BF4 /* CalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4EF94EB9F603709610A08C7 /* CalibrationView.swift */; };
+		3BBB5C9DAAF36A040BDC31A9 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E895AD3E4EEB91150F165267 /* KeychainStore.swift */; };
 		3EC4737A27B096D7B7BD8636 /* CalibrationAndSignalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93FF452B3905DE4735160D8 /* CalibrationAndSignalTests.swift */; };
 		544708C9BDA13A56482109BE /* AlertPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE352DE23222AADB67B0DDB1 /* AlertPlayer.swift */; };
 		58EE139EAE3DFF07326171E7 /* CalibrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBFE026C5750DEC684AC4821 /* CalibrationManager.swift */; };
@@ -17,13 +19,21 @@
 		63EE9D273B1172C56A078E1C /* SpeedGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B94F260CA505ACB50F57D5CD /* SpeedGate.swift */; };
 		6E37265B0C5CF9DAA0C6FBB3 /* FaceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270EEB9E2063D134342FC814 /* FaceTracker.swift */; };
 		7C4CD11D545291B13AA2B8E8 /* DetectionEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B664B1F68949794C82325A2C /* DetectionEngineTests.swift */; };
+		7CC4FECD3B8F6C3E0EA57392 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C8F04355BC753F92A485C2 /* APIClient.swift */; };
 		80EDB3AB5781872F22016284 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D408E4ECC6C1CB7A7E91A9B8 /* RootView.swift */; };
 		839C1F81216978DAA928C9AB /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = F73B9D08A3D94CE8F186AF29 /* Theme.swift */; };
+		86880048951468CA5F38E84B /* DistractionTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB7711EC727795D54E3CEA43 /* DistractionTimer.swift */; };
 		8FE2A4879E4D95CFD2DC4854 /* CameraService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3968CD9755705E1BCA077DA8 /* CameraService.swift */; };
 		986F53E84E0CE51078FE33A2 /* DriverMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0F7CD5FDB334955EC8506FD /* DriverMonitor.swift */; };
 		AE4580BCC4A5921F68FD3887 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6885B85F434C45884BB60C70 /* AppSettings.swift */; };
 		BC8AE1C7945B6286FD9AA423 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F42465642F7B52746CCCB99 /* SettingsView.swift */; };
+		C02EAA61847DB0616AE1BDA2 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0BAD89052A05830BF28E81 /* APIModels.swift */; };
+		D77C0FDA4D3EA81E23CDDBB5 /* AccountManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C8E9C1ADA73E3AD1A24DCE /* AccountManager.swift */; };
 		DD641082C58FF4850BC5A17C /* FaceOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34567750CC5BF3D63D650B06 /* FaceOverlay.swift */; };
+		DF7076CDB02E9A469CFC56E7 /* AddContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4D1B0F1A08E5615EA7C49 /* AddContactView.swift */; };
+		E47DA29EB3C451A0383D4B0F /* DistractionTimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7995B0F1F2D12932E998A90 /* DistractionTimerTests.swift */; };
+		EC20586379971065A619243F /* ContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFF60C8384DBD40EE4ABFFE4 /* ContactsView.swift */; };
+		FD96DDBE6516107F33BE98EB /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4615C3A97B9BAFB960E07176 /* AppConfig.swift */; };
 		FFA700EEEAFC84E9B369E14F /* MonitoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D4499A064F268C50A612859 /* MonitoringView.swift */; };
 /* End PBXBuildFile section */
 
@@ -38,6 +48,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		03C8E9C1ADA73E3AD1A24DCE /* AccountManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountManager.swift; sourceTree = "<group>"; };
+		13C8F04355BC753F92A485C2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		1E428CF4F4CFA39C22C71CEE /* SafeDriveAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeDriveAIApp.swift; sourceTree = "<group>"; };
 		270EEB9E2063D134342FC814 /* FaceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceTracker.swift; sourceTree = "<group>"; };
 		2D4499A064F268C50A612859 /* MonitoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringView.swift; sourceTree = "<group>"; };
@@ -45,18 +57,26 @@
 		38BEA35710DE81A9EF185BEF /* SafeDriveAITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = SafeDriveAITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3968CD9755705E1BCA077DA8 /* CameraService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraService.swift; sourceTree = "<group>"; };
 		3C65A19A0CF280911A697129 /* DetectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionEngine.swift; sourceTree = "<group>"; };
+		4615C3A97B9BAFB960E07176 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		49B4D1B0F1A08E5615EA7C49 /* AddContactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddContactView.swift; sourceTree = "<group>"; };
 		503FDE0B5120C5D96951F527 /* SafeDriveAI.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SafeDriveAI.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		60F3B73AA9FF72DA88F1131A /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		6885B85F434C45884BB60C70 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		6F42465642F7B52746CCCB99 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		9C0BAD89052A05830BF28E81 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		A4EF94EB9F603709610A08C7 /* CalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationView.swift; sourceTree = "<group>"; };
 		A93FF452B3905DE4735160D8 /* CalibrationAndSignalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationAndSignalTests.swift; sourceTree = "<group>"; };
+		AFF60C8384DBD40EE4ABFFE4 /* ContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsView.swift; sourceTree = "<group>"; };
 		B664B1F68949794C82325A2C /* DetectionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetectionEngineTests.swift; sourceTree = "<group>"; };
 		B82826B8B43A089F2DDCE255 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B94F260CA505ACB50F57D5CD /* SpeedGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeedGate.swift; sourceTree = "<group>"; };
+		CB7711EC727795D54E3CEA43 /* DistractionTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistractionTimer.swift; sourceTree = "<group>"; };
 		D0F7CD5FDB334955EC8506FD /* DriverMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverMonitor.swift; sourceTree = "<group>"; };
 		D408E4ECC6C1CB7A7E91A9B8 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		D7995B0F1F2D12932E998A90 /* DistractionTimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistractionTimerTests.swift; sourceTree = "<group>"; };
 		DE352DE23222AADB67B0DDB1 /* AlertPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertPlayer.swift; sourceTree = "<group>"; };
+		E0F5A864ABD2DE283C632B52 /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
+		E895AD3E4EEB91150F165267 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		EBFE026C5750DEC684AC4821 /* CalibrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationManager.swift; sourceTree = "<group>"; };
 		F73B9D08A3D94CE8F186AF29 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -65,13 +85,16 @@
 		05B920DC02B90C70B3F0B35C /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				03C8E9C1ADA73E3AD1A24DCE /* AccountManager.swift */,
 				6885B85F434C45884BB60C70 /* AppSettings.swift */,
 				EBFE026C5750DEC684AC4821 /* CalibrationManager.swift */,
 				3968CD9755705E1BCA077DA8 /* CameraService.swift */,
 				3C65A19A0CF280911A697129 /* DetectionEngine.swift */,
+				CB7711EC727795D54E3CEA43 /* DistractionTimer.swift */,
 				D0F7CD5FDB334955EC8506FD /* DriverMonitor.swift */,
 				270EEB9E2063D134342FC814 /* FaceTracker.swift */,
 				B94F260CA505ACB50F57D5CD /* SpeedGate.swift */,
+				72D7338B41FDC94265A6AB26 /* Networking */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -81,6 +104,7 @@
 			children = (
 				A93FF452B3905DE4735160D8 /* CalibrationAndSignalTests.swift */,
 				B664B1F68949794C82325A2C /* DetectionEngineTests.swift */,
+				D7995B0F1F2D12932E998A90 /* DistractionTimerTests.swift */,
 			);
 			path = SafeDriveAITests;
 			sourceTree = "<group>";
@@ -102,6 +126,17 @@
 			path = Alerts;
 			sourceTree = "<group>";
 		};
+		72D7338B41FDC94265A6AB26 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				13C8F04355BC753F92A485C2 /* APIClient.swift */,
+				9C0BAD89052A05830BF28E81 /* APIModels.swift */,
+				4615C3A97B9BAFB960E07176 /* AppConfig.swift */,
+				E895AD3E4EEB91150F165267 /* KeychainStore.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
 		A98A201876FD1C27F8A57C25 /* SafeDriveAI */ = {
 			isa = PBXGroup;
 			children = (
@@ -117,7 +152,10 @@
 		AD194F56A288C01BD1D95D56 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				E0F5A864ABD2DE283C632B52 /* AccountView.swift */,
+				49B4D1B0F1A08E5615EA7C49 /* AddContactView.swift */,
 				A4EF94EB9F603709610A08C7 /* CalibrationView.swift */,
+				AFF60C8384DBD40EE4ABFFE4 /* ContactsView.swift */,
 				34567750CC5BF3D63D650B06 /* FaceOverlay.swift */,
 				2D4499A064F268C50A612859 /* MonitoringView.swift */,
 				60F3B73AA9FF72DA88F1131A /* OnboardingView.swift */,
@@ -222,15 +260,24 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7CC4FECD3B8F6C3E0EA57392 /* APIClient.swift in Sources */,
+				C02EAA61847DB0616AE1BDA2 /* APIModels.swift in Sources */,
+				D77C0FDA4D3EA81E23CDDBB5 /* AccountManager.swift in Sources */,
+				19489D44A3EB0CC6B6A2B110 /* AccountView.swift in Sources */,
+				DF7076CDB02E9A469CFC56E7 /* AddContactView.swift in Sources */,
 				544708C9BDA13A56482109BE /* AlertPlayer.swift in Sources */,
+				FD96DDBE6516107F33BE98EB /* AppConfig.swift in Sources */,
 				AE4580BCC4A5921F68FD3887 /* AppSettings.swift in Sources */,
 				58EE139EAE3DFF07326171E7 /* CalibrationManager.swift in Sources */,
 				317F9CFCBE2DCF5D4E228BF4 /* CalibrationView.swift in Sources */,
 				8FE2A4879E4D95CFD2DC4854 /* CameraService.swift in Sources */,
+				EC20586379971065A619243F /* ContactsView.swift in Sources */,
 				5F35DEF5FD373B5C1A98900E /* DetectionEngine.swift in Sources */,
+				86880048951468CA5F38E84B /* DistractionTimer.swift in Sources */,
 				986F53E84E0CE51078FE33A2 /* DriverMonitor.swift in Sources */,
 				DD641082C58FF4850BC5A17C /* FaceOverlay.swift in Sources */,
 				6E37265B0C5CF9DAA0C6FBB3 /* FaceTracker.swift in Sources */,
+				3BBB5C9DAAF36A040BDC31A9 /* KeychainStore.swift in Sources */,
 				FFA700EEEAFC84E9B369E14F /* MonitoringView.swift in Sources */,
 				24D7F89E0FFC436ADCA43315 /* OnboardingView.swift in Sources */,
 				80EDB3AB5781872F22016284 /* RootView.swift in Sources */,
@@ -247,6 +294,7 @@
 			files = (
 				3EC4737A27B096D7B7BD8636 /* CalibrationAndSignalTests.swift in Sources */,
 				7C4CD11D545291B13AA2B8E8 /* DetectionEngineTests.swift in Sources */,
+				E47DA29EB3C451A0383D4B0F /* DistractionTimerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

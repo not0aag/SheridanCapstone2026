@@ -20,6 +20,14 @@ info:
     - Anonymous: 100 requests/hour
     - Authenticated: 1000 requests/hour
 
+    ## Note on this document
+    The `Auth`, `Users`, `Trips`, `Incidents`, and `Videos` sections above
+    describe an earlier, illustrative API shape (UUID ids, `/auth/...`
+    paths) and have drifted from the current FastAPI implementation, which
+    actually uses integer ids and `/users/register`, `/users/login`, etc.
+    The `Contacts` and `Alerts` sections were added directly from the real,
+    implemented routes and reflect the actual request/response shapes.
+
   contact:
     name: SafeDrive AI Team
     email: support@safedriveai.com
@@ -47,6 +55,13 @@ tags:
     description: Safety incident logging
   - name: Videos
     description: Video upload and retrieval
+  - name: Contacts
+    description: >-
+      Trusted/emergency contacts who receive an SMS if the driver is
+      continuously distracted for a prolonged period. Contacts are identified
+      by phone number and do not need their own SafeDrive AI account.
+  - name: Alerts
+    description: Prolonged-distraction alert triggers
   - name: Health
     description: API health checks
 
@@ -446,6 +461,119 @@ paths:
           $ref: "#/components/responses/NotFound"
         "401":
           $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  # CONTACTS
+  # (real, implemented routes — integer ids, no /auth prefix)
+  # ============================================================
+  /contacts/:
+    post:
+      summary: Add a trusted contact
+      description: >-
+        Saves a phone number (and optional name/email/relationship) that
+        will receive an SMS if the authenticated driver is detected as
+        continuously distracted for a prolonged period. The contact does
+        not need a SafeDrive AI account.
+      tags: [Contacts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmergencyContactCreate"
+            examples:
+              addContact:
+                summary: Add a contact
+                value:
+                  name: "Jamie Driver"
+                  phone_number: "+15551234567"
+                  relationship: "spouse"
+      responses:
+        "201":
+          description: Contact saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmergencyContact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    get:
+      summary: List trusted contacts
+      description: Retrieve all trusted contacts saved by the authenticated driver.
+      tags: [Contacts]
+      responses:
+        "200":
+          description: List of trusted contacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EmergencyContact"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /contacts/{contact_id}:
+    delete:
+      summary: Remove a trusted contact
+      description: >-
+        Deletes a contact owned by the authenticated driver. Returns 404 if
+        the contact does not exist or belongs to a different driver.
+      tags: [Contacts]
+      parameters:
+        - in: path
+          name: contact_id
+          required: true
+          schema:
+            type: integer
+          description: Contact ID
+      responses:
+        "204":
+          description: Contact deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============================================================
+  # ALERTS
+  # ============================================================
+  /alerts/distraction:
+    post:
+      summary: Trigger a prolonged-distraction alert
+      description: >-
+        Called by the iOS app once the driver has been continuously
+        distracted for roughly 10 seconds. Sends an SMS to every trusted
+        contact saved by the authenticated driver via Twilio, and records
+        an audit row. Returns `contacts_notified: 0` (not an error) if the
+        driver has no saved contacts yet. Rate-limited to at most one alert
+        per driver every 2 minutes; a repeat call within that window
+        returns 429.
+      tags: [Alerts]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistractionAlertCreate"
+            examples:
+              triggerAlert:
+                summary: Prolonged distraction detected
+                value:
+                  latitude: 43.6532
+                  longitude: -79.3832
+      responses:
+        "201":
+          description: Alert recorded and contacts notified
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DistractionAlert"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          description: An alert was already sent for this driver within the last 2 minutes
 
   # ============================================================
   # VIDEOS
@@ -953,6 +1081,81 @@ components:
           format: date-time
           description: When video was uploaded
           example: "2025-11-19T14:45:30Z"
+
+    # ============================================================
+    # CONTACT SCHEMAS
+    # (real, implemented schemas — integer ids)
+    # ============================================================
+    EmergencyContactCreate:
+      type: object
+      required: [name, phone_number]
+      properties:
+        name:
+          type: string
+          description: Contact's display name
+          example: "Jamie Driver"
+        phone_number:
+          type: string
+          description: Contact's phone number, SMS destination
+          example: "+15551234567"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "jamie@example.com"
+        relationship:
+          type: string
+          nullable: true
+          description: Optional free-text label
+          example: "spouse"
+
+    EmergencyContact:
+      allOf:
+        - $ref: "#/components/schemas/EmergencyContactCreate"
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+              description: Unique contact identifier
+              example: 1
+
+    # ============================================================
+    # ALERT SCHEMAS
+    # ============================================================
+    DistractionAlertCreate:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+          nullable: true
+          example: 43.6532
+        longitude:
+          type: number
+          format: double
+          nullable: true
+          example: -79.3832
+        trip_id:
+          type: integer
+          nullable: true
+          description: Related trip, if the app has one active
+
+    DistractionAlert:
+      type: object
+      required: [id, contacts_notified, sent_at]
+      properties:
+        id:
+          type: integer
+          example: 1
+        contacts_notified:
+          type: integer
+          description: Number of trusted contacts texted
+          example: 2
+        sent_at:
+          type: string
+          format: date-time
+          example: "2026-07-13T21:06:46Z"
 
     # ============================================================
     # COMMON SCHEMAS

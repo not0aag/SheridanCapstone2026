@@ -48,6 +48,7 @@ final class DriverMonitor: ObservableObject {
     private let tracker = FaceTracker()
     private let engine = DetectionEngine()
     private let alerts = AlertPlayer()
+    private let distractionTimer = DistractionTimer()
     private var cancellables = Set<AnyCancellable>()
 
     init(settings: AppSettings, calibration: CalibrationManager) {
@@ -76,6 +77,7 @@ final class DriverMonitor: ObservableObject {
     func startMonitoring() {
         guard calibration.isCalibrated else { return }
         engine.reset()
+        distractionTimer.reset()
         driverState = .safe
         sessionStart = .now
         phase = .monitoring
@@ -137,6 +139,7 @@ final class DriverMonitor: ObservableObject {
                 if phase != .paused(reason: "Below speed threshold") {
                     phase = .paused(reason: "Below speed threshold")
                     engine.reset()
+                    distractionTimer.reset()
                     driverState = .safe
                     alerts.update(for: .safe)
                 }
@@ -157,6 +160,10 @@ final class DriverMonitor: ObservableObject {
             windowReady = assessment.ready
             alerts.update(for: assessment.state)
             debug = Self.debugSignals(for: snapshot, baseline: baseline, settings: settings)
+
+            if distractionTimer.ingest(state: assessment.state, atMs: snapshot.timestampMs) == .fire {
+                Task { await sendDistractionAlert() }
+            }
 
         case .idle:
             break
@@ -206,6 +213,16 @@ final class DriverMonitor: ObservableObject {
             gazeReadable: snapshot.gaze != nil,
             offRoad: offRoad
         )
+    }
+
+    // MARK: Prolonged-distraction alert
+
+    /// Best-effort: the local audio/haptic alert (AlertPlayer) has already
+    /// fired regardless of this call's outcome, so a network failure here
+    /// is non-fatal and silently swallowed.
+    private func sendDistractionAlert() async {
+        guard settings.smsAlertsEnabled else { return }
+        _ = try? await APIClient.shared.sendDistractionAlert(latitude: nil, longitude: nil)
     }
 
     // MARK: Background behaviour
