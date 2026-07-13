@@ -25,6 +25,16 @@
 		BC8AE1C7945B6286FD9AA423 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F42465642F7B52746CCCB99 /* SettingsView.swift */; };
 		DD641082C58FF4850BC5A17C /* FaceOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34567750CC5BF3D63D650B06 /* FaceOverlay.swift */; };
 		FFA700EEEAFC84E9B369E14F /* MonitoringView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D4499A064F268C50A612859 /* MonitoringView.swift */; };
+		7DC13CF8FF623B635BFC9B8A /* DistractionTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C0BA2DD9E0CC751CE167C2D /* DistractionTimer.swift */; };
+		25CD89C4506D93D8163C9240 /* AccountManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77510D6E890F1D2D52D14449 /* AccountManager.swift */; };
+		B594BB7E95F9ABFB7D4542C4 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88D674566C021078F009FB1F /* AppConfig.swift */; };
+		FC793CEE381E609F5788BF69 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = CABE505F0A2B584D8CB59B4E /* APIModels.swift */; };
+		7540A7CE8FDF229DF60ED3B9 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D81551455D6E09EC98738D /* KeychainStore.swift */; };
+		2FCB104634F661D43FE447B2 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82D613F04FEC2142F413CDEE /* APIClient.swift */; };
+		E7232179702C32C5D63ABD7A /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4672AAC2E2F6694B50175BB /* AccountView.swift */; };
+		608E23974CA46C937248E22B /* ContactsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 444C91C8C89E4EFF020E7FF0 /* ContactsView.swift */; };
+		2B32E1C73AD328EA59C70F8C /* AddContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4D4411FAD5F17ED436AE048 /* AddContactView.swift */; };
+		60159F553742CCD0A3E23053 /* DistractionTimerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 623451FEFC8A269CBBA92BC6 /* DistractionTimerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +69,16 @@
 		DE352DE23222AADB67B0DDB1 /* AlertPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertPlayer.swift; sourceTree = "<group>"; };
 		EBFE026C5750DEC684AC4821 /* CalibrationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationManager.swift; sourceTree = "<group>"; };
 		F73B9D08A3D94CE8F186AF29 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		5C0BA2DD9E0CC751CE167C2D /* DistractionTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistractionTimer.swift; sourceTree = "<group>"; };
+		77510D6E890F1D2D52D14449 /* AccountManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountManager.swift; sourceTree = "<group>"; };
+		88D674566C021078F009FB1F /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		CABE505F0A2B584D8CB59B4E /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
+		E0D81551455D6E09EC98738D /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		82D613F04FEC2142F413CDEE /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		F4672AAC2E2F6694B50175BB /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
+		444C91C8C89E4EFF020E7FF0 /* ContactsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactsView.swift; sourceTree = "<group>"; };
+		C4D4411FAD5F17ED436AE048 /* AddContactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddContactView.swift; sourceTree = "<group>"; };
+		623451FEFC8A269CBBA92BC6 /* DistractionTimerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DistractionTimerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -72,6 +92,9 @@
 				D0F7CD5FDB334955EC8506FD /* DriverMonitor.swift */,
 				270EEB9E2063D134342FC814 /* FaceTracker.swift */,
 				B94F260CA505ACB50F57D5CD /* SpeedGate.swift */,
+				5C0BA2DD9E0CC751CE167C2D /* DistractionTimer.swift */,
+				77510D6E890F1D2D52D14449 /* AccountManager.swift */,
+				30A20244CEC694B405902ED9 /* Networking */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -81,6 +104,7 @@
 			children = (
 				A93FF452B3905DE4735160D8 /* CalibrationAndSignalTests.swift */,
 				B664B1F68949794C82325A2C /* DetectionEngineTests.swift */,
+				623451FEFC8A269CBBA92BC6 /* DistractionTimerTests.swift */,
 			);
 			path = SafeDriveAITests;
 			sourceTree = "<group>";
@@ -123,6 +147,9 @@
 				60F3B73AA9FF72DA88F1131A /* OnboardingView.swift */,
 				6F42465642F7B52746CCCB99 /* SettingsView.swift */,
 				F73B9D08A3D94CE8F186AF29 /* Theme.swift */,
+				F4672AAC2E2F6694B50175BB /* AccountView.swift */,
+				444C91C8C89E4EFF020E7FF0 /* ContactsView.swift */,
+				C4D4411FAD5F17ED436AE048 /* AddContactView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -143,6 +170,17 @@
 				38BEA35710DE81A9EF185BEF /* SafeDriveAITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		30A20244CEC694B405902ED9 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				88D674566C021078F009FB1F /* AppConfig.swift */,
+				CABE505F0A2B584D8CB59B4E /* APIModels.swift */,
+				E0D81551455D6E09EC98738D /* KeychainStore.swift */,
+				82D613F04FEC2142F413CDEE /* APIClient.swift */,
+			);
+			path = Networking;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -238,6 +276,15 @@
 				BC8AE1C7945B6286FD9AA423 /* SettingsView.swift in Sources */,
 				63EE9D273B1172C56A078E1C /* SpeedGate.swift in Sources */,
 				839C1F81216978DAA928C9AB /* Theme.swift in Sources */,
+				7DC13CF8FF623B635BFC9B8A /* DistractionTimer.swift in Sources */,
+				25CD89C4506D93D8163C9240 /* AccountManager.swift in Sources */,
+				B594BB7E95F9ABFB7D4542C4 /* AppConfig.swift in Sources */,
+				FC793CEE381E609F5788BF69 /* APIModels.swift in Sources */,
+				7540A7CE8FDF229DF60ED3B9 /* KeychainStore.swift in Sources */,
+				2FCB104634F661D43FE447B2 /* APIClient.swift in Sources */,
+				E7232179702C32C5D63ABD7A /* AccountView.swift in Sources */,
+				608E23974CA46C937248E22B /* ContactsView.swift in Sources */,
+				2B32E1C73AD328EA59C70F8C /* AddContactView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,6 +294,7 @@
 			files = (
 				3EC4737A27B096D7B7BD8636 /* CalibrationAndSignalTests.swift in Sources */,
 				7C4CD11D545291B13AA2B8E8 /* DetectionEngineTests.swift in Sources */,
+				60159F553742CCD0A3E23053 /* DistractionTimerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -406,6 +454,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -445,6 +494,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

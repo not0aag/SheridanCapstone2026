@@ -4,6 +4,8 @@ from app.routes.users import router as users_router
 from app.routes.trips import router as trips_router
 from app.routes.incidents import router as incidents_router
 from app.routes.videos import router as videos_router
+from app.routes.contacts import router as contacts_router
+from app.routes.alerts import router as alerts_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -16,6 +18,8 @@ app.include_router(users_router)
 app.include_router(trips_router)
 app.include_router(incidents_router)
 app.include_router(videos_router)
+app.include_router(contacts_router)
+app.include_router(alerts_router)
 
 # Root endpoint
 @app.get("/")

@@ -28,6 +28,13 @@ targets:
         UIRequiredDeviceCapabilities: [front-facing-camera]
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
         UILaunchScreen: {}
+        # Debug builds talk to a plain-HTTP local dev backend (see
+        # Core/Networking/AppConfig.swift). NSAllowsLocalNetworking permits
+        # insecure HTTP to LAN/loopback addresses without pinning a specific
+        # IP, so it keeps working if the Mac's address changes. Release
+        # builds only ever use HTTPS and get no exception.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
     settings:
       base:
         SWIFT_VERSION: "5.9"
@@ -47,6 +54,7 @@ targets:
     settings:
       base:
         SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: YES
 
 schemes:
   SafeDriveAI:
