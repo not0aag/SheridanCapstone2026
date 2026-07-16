@@ -153,7 +153,7 @@ final class DetectionEngine {
             // no single signal may trigger an alert on its own).
             offRoad = false
         }
-        return Sample(tMs: s.timestampMs, eyesClosed: eyesClosed && !offRoad, offRoad: offRoad)
+        return Sample(tMs: s.timestampMs, eyesClosed: eyesClosed, offRoad: offRoad)
     }
 
     // MARK: State machine with hysteresis

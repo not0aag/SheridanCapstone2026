@@ -37,9 +37,11 @@ final class AppSettings: ObservableObject {
     var perclosThreshold: Double { 0.45 - drowsinessSensitivity * 0.25 }
 
     /// Head deviation (radians) considered "looking away":
-    /// sensitive ≈14° ... lenient ≈29°.
-    var headDeviationRadians: Float { Float(0.50 - distractionSensitivity * 0.25) }
+    /// sensitive ≈11° ... lenient ≈23°.
+    var headDeviationRadians: Float { Float(0.40 - distractionSensitivity * 0.20) }
 
     /// Gaze offset (fraction of eye width) considered "eyes off road".
-    var gazeDeviationThreshold: Float { Float(0.30 - distractionSensitivity * 0.14) }
+    /// Range is kept low because Vision's pupil positions only shift ~0.10–0.15
+    /// units for real gaze changes at typical dashboard camera distances.
+    var gazeDeviationThreshold: Float { Float(0.15 - distractionSensitivity * 0.07) }
 }
