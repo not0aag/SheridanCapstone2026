@@ -35,14 +35,22 @@ targets:
         # builds only ever use HTTPS and get no exception.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        # Debug-only dev backend host, read by AppConfig.swift at runtime.
+        # Change DEV_BACKEND_HOST below and re-run `xcodegen generate` if
+        # your Mac's LAN IP changes — no code edit needed.
+        DEV_BACKEND_HOST: "$(DEV_BACKEND_HOST)"
     settings:
       base:
         SWIFT_VERSION: "5.9"
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 4XD49CGM7T
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
+      configs:
+        Debug:
+          DEV_BACKEND_HOST: "142.55.48.25:8000"
 
   SafeDriveAITests:
     type: bundle.unit-test

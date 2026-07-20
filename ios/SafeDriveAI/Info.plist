@@ -20,15 +20,17 @@
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-	<key>NSCameraUsageDescription</key>
-	<string>SafeDrive AI uses the front camera to detect drowsiness and distraction while you drive. All analysis happens on this phone — no video is stored or transmitted.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Your speed is used only to pause monitoring while you are stopped or parked. Enable this if you set a speed threshold in Settings.</string>
+	<key>DEV_BACKEND_HOST</key>
+	<string>$(DEV_BACKEND_HOST)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>SafeDrive AI uses the front camera to detect drowsiness and distraction while you drive. All analysis happens on this phone — no video is stored or transmitted.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Your speed is used only to pause monitoring while you are stopped or parked. Enable this if you set a speed threshold in Settings.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

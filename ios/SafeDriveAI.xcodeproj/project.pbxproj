@@ -231,6 +231,7 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					32505B43F9EF650FDB04DA99 = {
+						DevelopmentTeam = 4XD49CGM7T;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -316,6 +317,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4XD49CGM7T;
 				INFOPLIST_FILE = SafeDriveAI/Info.plist;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -474,6 +476,8 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 4XD49CGM7T;
+				DEV_BACKEND_HOST = "142.55.48.25:8000";
 				INFOPLIST_FILE = SafeDriveAI/Info.plist;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (

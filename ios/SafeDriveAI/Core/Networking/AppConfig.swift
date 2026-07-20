@@ -7,12 +7,14 @@ enum AppConfig {
     /// docs/api/openapi.yaml.
     ///
     /// NOTE: "localhost" only resolves to the Mac when running in the
-    /// Simulator. A physical iPhone needs the Mac's actual LAN IP (find it
-    /// with `ipconfig getifaddr en0`) — update the value below if you're
-    /// testing on-device and your Mac's IP changes.
+    /// Simulator. A physical iPhone needs the Mac's actual LAN IP. This is
+    /// read from the DEV_BACKEND_HOST build setting (see ios/project.yml)
+    /// via Info.plist, so switching networks only needs a project.yml edit
+    /// + `xcodegen generate` — no source change or recompile of this file.
     static var backendBaseURL: URL {
         #if DEBUG
-        return URL(string: "http://142.55.48.25:8000")!
+        let host = Bundle.main.object(forInfoDictionaryKey: "DEV_BACKEND_HOST") as? String
+        return URL(string: "http://\(host ?? "142.55.48.25:8000")")!
         #else
         return URL(string: "https://api.safedriveai.com")!
         #endif
