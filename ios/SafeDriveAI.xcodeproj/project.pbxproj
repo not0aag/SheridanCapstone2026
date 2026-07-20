@@ -13,6 +13,7 @@
 		317F9CFCBE2DCF5D4E228BF4 /* CalibrationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4EF94EB9F603709610A08C7 /* CalibrationView.swift */; };
 		3BBB5C9DAAF36A040BDC31A9 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = E895AD3E4EEB91150F165267 /* KeychainStore.swift */; };
 		3EC4737A27B096D7B7BD8636 /* CalibrationAndSignalTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93FF452B3905DE4735160D8 /* CalibrationAndSignalTests.swift */; };
+		47328E1A2466AA1925938604 /* CameraPermissionDeniedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 229C30AEB68FB72EBFB144B2 /* CameraPermissionDeniedView.swift */; };
 		544708C9BDA13A56482109BE /* AlertPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE352DE23222AADB67B0DDB1 /* AlertPlayer.swift */; };
 		58EE139EAE3DFF07326171E7 /* CalibrationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBFE026C5750DEC684AC4821 /* CalibrationManager.swift */; };
 		5F35DEF5FD373B5C1A98900E /* DetectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C65A19A0CF280911A697129 /* DetectionEngine.swift */; };
@@ -51,6 +52,7 @@
 		03C8E9C1ADA73E3AD1A24DCE /* AccountManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountManager.swift; sourceTree = "<group>"; };
 		13C8F04355BC753F92A485C2 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		1E428CF4F4CFA39C22C71CEE /* SafeDriveAIApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafeDriveAIApp.swift; sourceTree = "<group>"; };
+		229C30AEB68FB72EBFB144B2 /* CameraPermissionDeniedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPermissionDeniedView.swift; sourceTree = "<group>"; };
 		270EEB9E2063D134342FC814 /* FaceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceTracker.swift; sourceTree = "<group>"; };
 		2D4499A064F268C50A612859 /* MonitoringView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitoringView.swift; sourceTree = "<group>"; };
 		34567750CC5BF3D63D650B06 /* FaceOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceOverlay.swift; sourceTree = "<group>"; };
@@ -155,6 +157,7 @@
 				E0F5A864ABD2DE283C632B52 /* AccountView.swift */,
 				49B4D1B0F1A08E5615EA7C49 /* AddContactView.swift */,
 				A4EF94EB9F603709610A08C7 /* CalibrationView.swift */,
+				229C30AEB68FB72EBFB144B2 /* CameraPermissionDeniedView.swift */,
 				AFF60C8384DBD40EE4ABFFE4 /* ContactsView.swift */,
 				34567750CC5BF3D63D650B06 /* FaceOverlay.swift */,
 				2D4499A064F268C50A612859 /* MonitoringView.swift */,
@@ -271,6 +274,7 @@
 				AE4580BCC4A5921F68FD3887 /* AppSettings.swift in Sources */,
 				58EE139EAE3DFF07326171E7 /* CalibrationManager.swift in Sources */,
 				317F9CFCBE2DCF5D4E228BF4 /* CalibrationView.swift in Sources */,
+				47328E1A2466AA1925938604 /* CameraPermissionDeniedView.swift in Sources */,
 				8FE2A4879E4D95CFD2DC4854 /* CameraService.swift in Sources */,
 				EC20586379971065A619243F /* ContactsView.swift in Sources */,
 				5F35DEF5FD373B5C1A98900E /* DetectionEngine.swift in Sources */,

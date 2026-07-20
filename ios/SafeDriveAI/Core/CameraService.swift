@@ -1,5 +1,6 @@
 import AVFoundation
 import SwiftUI
+import UIKit
 
 /// Front-camera capture, tuned for continuous driver monitoring.
 ///
@@ -19,16 +20,48 @@ final class CameraService: NSObject, ObservableObject {
     private let sessionQueue = DispatchQueue(label: "safedrive.camera", qos: .userInitiated)
     private var configured = false
 
+    override init() {
+        super.init()
+        // Covers "already denied from a previous run": catches a permission
+        // that was revoked in Settings between launches, and clears the
+        // blocked state if the user grants access in Settings and comes back
+        // — start()'s own requestAccess callback only fires for the
+        // in-app prompt, not a change made outside the app.
+        refreshAuthorizationStatus()
+        NotificationCenter.default.addObserver(
+            forName: UIApplication.willEnterForegroundNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            self?.refreshAuthorizationStatus()
+        }
+    }
+
+    /// Re-checks the OS permission without prompting or starting the
+    /// session. Safe to call anytime the UI needs an up-to-date read.
+    func refreshAuthorizationStatus() {
+        switch AVCaptureDevice.authorizationStatus(for: .video) {
+        case .authorized: permissionDenied = false
+        case .denied, .restricted: permissionDenied = true
+        case .notDetermined: break
+        @unknown default: break
+        }
+    }
+
     // MARK: Lifecycle
 
     func start() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
+            permissionDenied = false
             startSession()
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
                 DispatchQueue.main.async {
-                    if granted { self?.startSession() } else { self?.permissionDenied = true }
+                    if granted {
+                        self?.permissionDenied = false
+                        self?.startSession()
+                    } else {
+                        self?.permissionDenied = true
+                    }
                 }
             }
         default:
