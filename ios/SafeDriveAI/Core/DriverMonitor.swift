@@ -1,6 +1,21 @@
 import Foundation
 import Combine
 import UIKit
+import simd
+
+/// Raw per-frame signal values for the live tuning overlay (Section 9 of the
+/// iOS handover doc). Not used for any alert decision — DetectionEngine owns
+/// that. This exists purely so thresholds can be tuned by watching real
+/// numbers instead of guessing.
+struct DebugSignals: Equatable {
+    var yaw: Float = 0
+    var pitch: Float = 0
+    var headDelta: Float = 0
+    var headDeviated: Bool = false
+    var gazeDelta: Float?
+    var gazeReadable: Bool = false
+    var offRoad: Bool = false
+}
 
 /// Top-level coordinator: camera → FaceTracker → CalibrationManager or
 /// DetectionEngine → AlertPlayer, plus screen-awake and background handling.
@@ -23,6 +38,7 @@ final class DriverMonitor: ObservableObject {
     @Published private(set) var offRoadRate: Double = 0
     @Published private(set) var windowReady = false
     @Published private(set) var sessionStart: Date?
+    @Published private(set) var debug = DebugSignals()
 
     // MARK: Components
     let camera = CameraService()
@@ -140,10 +156,56 @@ final class DriverMonitor: ObservableObject {
             offRoadRate = assessment.offRoadRate
             windowReady = assessment.ready
             alerts.update(for: assessment.state)
+            debug = Self.debugSignals(for: snapshot, baseline: baseline, settings: settings)
 
         case .idle:
             break
         }
+    }
+
+    // MARK: Debug overlay
+
+    /// Mirrors DetectionEngine's per-frame fusion math so the overlay shows
+    /// exactly what the engine sees. Display-only — never feeds a decision.
+    private static func debugSignals(
+        for snapshot: FaceSnapshot,
+        baseline: CalibrationManager.Baseline,
+        settings: AppSettings
+    ) -> DebugSignals {
+        guard snapshot.faceDetected else { return DebugSignals() }
+
+        let headDeltaVec = SIMD2<Float>(snapshot.yaw - baseline.neutralYaw, snapshot.pitch - baseline.neutralPitch)
+        let headDelta = simd_length(headDeltaVec)
+        let headDeviated = headDelta > settings.headDeviationRadians
+
+        let closedThreshold = baseline.openEyeAperture * DetectionEngine.closureFactor
+        let eyesClosed = snapshot.eyeOpenness < closedThreshold
+
+        var gazeDelta: Float?
+        if let gaze = snapshot.gaze {
+            gazeDelta = simd_length(gaze - SIMD2<Float>(baseline.neutralGazeX, baseline.neutralGazeY))
+        }
+
+        let offRoad: Bool
+        if headDeviated {
+            if let gazeDelta, !eyesClosed {
+                offRoad = gazeDelta > settings.gazeDeviationThreshold
+            } else {
+                offRoad = true
+            }
+        } else {
+            offRoad = false
+        }
+
+        return DebugSignals(
+            yaw: snapshot.yaw,
+            pitch: snapshot.pitch,
+            headDelta: headDelta,
+            headDeviated: headDeviated,
+            gazeDelta: gazeDelta,
+            gazeReadable: snapshot.gaze != nil,
+            offRoad: offRoad
+        )
     }
 
     // MARK: Background behaviour

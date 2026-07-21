@@ -5,6 +5,7 @@ import SwiftUI
 struct MonitoringView: View {
     @EnvironmentObject private var monitor: DriverMonitor
     @EnvironmentObject private var calibration: CalibrationManager
+    @EnvironmentObject private var settings: AppSettings
     @State private var showSettings = false
     @State private var alertPulse = false
 
@@ -57,6 +58,19 @@ struct MonitoringView: View {
                 if isAlerting { alertBanner }
                 Spacer()
                 bottomControls
+            }
+
+            if isMonitoring && settings.debugOverlayEnabled {
+                VStack {
+                    HStack {
+                        Spacer()
+                        debugOverlay
+                    }
+                    Spacer()
+                }
+                .padding(.top, 60)
+                .padding(.trailing, 16)
+                .allowsHitTesting(false)
             }
         }
     }
@@ -189,6 +203,35 @@ struct MonitoringView: View {
         .padding(.bottom, 16)
         .animation(.easeInOut(duration: 0.25), value: isMonitoring)
     }
+
+    /// Live raw signal values for threshold tuning (see handover doc §9).
+    /// Never drives a decision — DetectionEngine does that. Toggle in
+    /// Settings; off by default.
+    private var debugOverlay: some View {
+        let d = monitor.debug
+        return VStack(alignment: .leading, spacing: 3) {
+            debugRow("yaw", format(d.yaw), "pitch", format(d.pitch))
+            debugRow("Δhead", format(d.headDelta), "dev", d.headDeviated ? "YES" : "no")
+            debugRow("Δgaze", d.gazeDelta.map(format) ?? "—", "readable", d.gazeReadable ? "yes" : "NO")
+            debugRow("offRoad", d.offRoad ? "YES" : "no", "", "")
+            debugRow("PERCLOS", String(format: "%.0f%%", monitor.perclos * 100),
+                      "offRoadRate", String(format: "%.0f%%", monitor.offRoadRate * 100))
+            debugRow("ready", monitor.windowReady ? "yes" : "no", "", "")
+        }
+        .font(.system(size: 11, weight: .medium, design: .monospaced))
+        .foregroundStyle(.white.opacity(0.9))
+        .padding(10)
+        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func debugRow(_ label1: String, _ value1: String, _ label2: String, _ value2: String) -> some View {
+        HStack(spacing: 10) {
+            Text("\(label1): \(value1)")
+            if !label2.isEmpty { Text("\(label2): \(value2)") }
+        }
+    }
+
+    private func format(_ v: Float) -> String { String(format: "%.3f", v) }
 
     private func elapsed(from start: Date, to now: Date) -> String {
         let s = Int(now.timeIntervalSince(start))

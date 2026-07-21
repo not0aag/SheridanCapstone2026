@@ -22,6 +22,12 @@ final class AppSettings: ObservableObject {
     @Published var speedThresholdKmh: Double {
         didSet { defaults.set(speedThresholdKmh, forKey: "speedThresholdKmh") }
     }
+    /// Shows live yaw/pitch/gaze numbers on the monitoring screen — for
+    /// threshold tuning during development. Off by default so a shipped demo
+    /// build never shows raw numbers unless someone opts in.
+    @Published var debugOverlayEnabled: Bool {
+        didSet { defaults.set(debugOverlayEnabled, forKey: "debugOverlayEnabled") }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -29,6 +35,7 @@ final class AppSettings: ObservableObject {
         distractionSensitivity = defaults.object(forKey: "distractionSensitivity") as? Double ?? 0.5
         soundEnabled = defaults.object(forKey: "soundEnabled") as? Bool ?? true
         speedThresholdKmh = defaults.object(forKey: "speedThresholdKmh") as? Double ?? 0
+        debugOverlayEnabled = defaults.object(forKey: "debugOverlayEnabled") as? Bool ?? false
     }
 
     // MARK: Derived thresholds (single source of truth for the engine)

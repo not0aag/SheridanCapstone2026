@@ -31,6 +31,12 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Toggle("Show debug overlay", isOn: $settings.debugOverlayEnabled)
+                } footer: {
+                    Text("Shows live yaw/pitch/gaze numbers on the monitoring screen — for tuning thresholds, not for driving with.")
+                }
+
+                Section {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text("Only monitor above")
