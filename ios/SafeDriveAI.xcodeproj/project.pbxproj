@@ -29,6 +29,7 @@
 		AE4580BCC4A5921F68FD3887 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6885B85F434C45884BB60C70 /* AppSettings.swift */; };
 		BC8AE1C7945B6286FD9AA423 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F42465642F7B52746CCCB99 /* SettingsView.swift */; };
 		C02EAA61847DB0616AE1BDA2 /* APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C0BAD89052A05830BF28E81 /* APIModels.swift */; };
+		D6E43C2CCF58DE04DE6F6993 /* ARFaceTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91DA1508EE8E1099AFE49741 /* ARFaceTracker.swift */; };
 		D77C0FDA4D3EA81E23CDDBB5 /* AccountManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C8E9C1ADA73E3AD1A24DCE /* AccountManager.swift */; };
 		DD641082C58FF4850BC5A17C /* FaceOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 34567750CC5BF3D63D650B06 /* FaceOverlay.swift */; };
 		DF7076CDB02E9A469CFC56E7 /* AddContactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49B4D1B0F1A08E5615EA7C49 /* AddContactView.swift */; };
@@ -65,6 +66,7 @@
 		60F3B73AA9FF72DA88F1131A /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		6885B85F434C45884BB60C70 /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
 		6F42465642F7B52746CCCB99 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		91DA1508EE8E1099AFE49741 /* ARFaceTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ARFaceTracker.swift; sourceTree = "<group>"; };
 		9C0BAD89052A05830BF28E81 /* APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIModels.swift; sourceTree = "<group>"; };
 		A4EF94EB9F603709610A08C7 /* CalibrationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationView.swift; sourceTree = "<group>"; };
 		A93FF452B3905DE4735160D8 /* CalibrationAndSignalTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalibrationAndSignalTests.swift; sourceTree = "<group>"; };
@@ -89,6 +91,7 @@
 			children = (
 				03C8E9C1ADA73E3AD1A24DCE /* AccountManager.swift */,
 				6885B85F434C45884BB60C70 /* AppSettings.swift */,
+				91DA1508EE8E1099AFE49741 /* ARFaceTracker.swift */,
 				EBFE026C5750DEC684AC4821 /* CalibrationManager.swift */,
 				3968CD9755705E1BCA077DA8 /* CameraService.swift */,
 				3C65A19A0CF280911A697129 /* DetectionEngine.swift */,
@@ -266,6 +269,7 @@
 			files = (
 				7CC4FECD3B8F6C3E0EA57392 /* APIClient.swift in Sources */,
 				C02EAA61847DB0616AE1BDA2 /* APIModels.swift in Sources */,
+				D6E43C2CCF58DE04DE6F6993 /* ARFaceTracker.swift in Sources */,
 				D77C0FDA4D3EA81E23CDDBB5 /* AccountManager.swift in Sources */,
 				19489D44A3EB0CC6B6A2B110 /* AccountView.swift in Sources */,
 				DF7076CDB02E9A469CFC56E7 /* AddContactView.swift in Sources */,

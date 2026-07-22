@@ -45,7 +45,6 @@ final class DriverMonitor: ObservableObject {
     let calibration: CalibrationManager
     let settings: AppSettings
     let speedGate = SpeedGate()
-    private let tracker = FaceTracker()
     private let engine = DetectionEngine()
     private let alerts = AlertPlayer()
     private let distractionTimer = DistractionTimer()
@@ -55,11 +54,8 @@ final class DriverMonitor: ObservableObject {
         self.settings = settings
         self.calibration = calibration
 
-        camera.onFrame = { [tracker] pixelBuffer, timestampMs in
-            // Capture queue: Vision runs here, results hop to the main actor.
-            tracker.process(pixelBuffer: pixelBuffer, timestampMs: timestampMs)
-        }
-        tracker.onSnapshot = { [weak self] snapshot in
+        camera.onSnapshot = { [weak self] snapshot in
+            // Delegate/capture queue: hop to the main actor before touching state.
             Task { @MainActor [weak self] in
                 self?.handle(snapshot)
             }

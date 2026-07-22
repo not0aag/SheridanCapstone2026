@@ -18,7 +18,7 @@ private struct CalibrationContent: View {
 
     var body: some View {
         ZStack {
-            CameraPreview(session: monitor.camera.session)
+            CameraPreview(camera: monitor.camera)
                 .ignoresSafeArea()
 
             FaceOverlay(geometry: monitor.overlay, state: .safe)

@@ -24,7 +24,7 @@ struct MonitoringView: View {
         ZStack {
             // Live camera or idle backdrop.
             if isMonitoring {
-                CameraPreview(session: monitor.camera.session)
+                CameraPreview(camera: monitor.camera)
                     .ignoresSafeArea()
                 FaceOverlay(geometry: monitor.overlay, state: monitor.driverState)
                     .ignoresSafeArea()
