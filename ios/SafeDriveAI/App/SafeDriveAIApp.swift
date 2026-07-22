@@ -24,7 +24,7 @@ struct SafeDriveAIApp: App {
                 .environmentObject(monitor)
                 .environmentObject(monitor.camera)
                 .environmentObject(account)
-                .preferredColorScheme(.dark) // driving app: dark theme always
+                .preferredColorScheme(settings.appearanceMode.colorScheme)
                 .tint(Theme.accent)
         }
     }

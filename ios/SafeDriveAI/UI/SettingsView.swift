@@ -26,6 +26,17 @@ struct SettingsView: View {
                     Text("Changes apply immediately, even while monitoring.")
                 }
 
+                Section {
+                    Picker("Appearance", selection: $settings.appearanceMode) {
+                        ForEach(AppearanceMode.allCases) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Text("Appearance")
+                }
+
                 Section("Alerts") {
                     Toggle("Alert sounds", isOn: $settings.soundEnabled)
                 }
@@ -100,7 +111,6 @@ struct SettingsView: View {
                 }
             }
         }
-        .preferredColorScheme(.dark)
     }
 
     private func sensitivityRow(title: String, value: Binding<Double>, detail: String) -> some View {

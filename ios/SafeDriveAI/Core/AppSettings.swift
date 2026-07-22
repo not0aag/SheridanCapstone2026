@@ -33,6 +33,11 @@ final class AppSettings: ObservableObject {
     @Published var smsAlertsEnabled: Bool {
         didSet { defaults.set(smsAlertsEnabled, forKey: "smsAlertsEnabled") }
     }
+    /// Light / Dark / System. Defaults to System — the app follows the
+    /// phone's setting unless the user explicitly overrides it.
+    @Published var appearanceMode: AppearanceMode {
+        didSet { defaults.set(appearanceMode.rawValue, forKey: "appearanceMode") }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -42,6 +47,7 @@ final class AppSettings: ObservableObject {
         speedThresholdKmh = defaults.object(forKey: "speedThresholdKmh") as? Double ?? 0
         debugOverlayEnabled = defaults.object(forKey: "debugOverlayEnabled") as? Bool ?? false
         smsAlertsEnabled = defaults.object(forKey: "smsAlertsEnabled") as? Bool ?? false
+        appearanceMode = (defaults.string(forKey: "appearanceMode")).flatMap(AppearanceMode.init) ?? .system
     }
 
     // MARK: Derived thresholds (single source of truth for the engine)
