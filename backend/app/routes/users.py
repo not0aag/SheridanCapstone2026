@@ -1,19 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
-import hashlib
+import bcrypt
 from app.database import get_db
 from app.models.user import User
 from app.auth import create_access_token, get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-# Simple password hashing using hashlib
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return hash_password(plain_password) == hashed_password
+    return bcrypt.checkpw(plain_password.encode(), hashed_password.encode())
 
 # Pydantic schemas
 class UserRegister(BaseModel):

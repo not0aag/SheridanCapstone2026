@@ -6,6 +6,7 @@ struct SafeDriveAIApp: App {
     @StateObject private var calibration: CalibrationManager
     @StateObject private var monitor: DriverMonitor
     @StateObject private var account: AccountManager
+    @StateObject private var contactsStore: LocalContactsStore
 
     init() {
         let settings = AppSettings()
@@ -14,6 +15,7 @@ struct SafeDriveAIApp: App {
         _calibration = StateObject(wrappedValue: calibration)
         _monitor = StateObject(wrappedValue: DriverMonitor(settings: settings, calibration: calibration))
         _account = StateObject(wrappedValue: AccountManager())
+        _contactsStore = StateObject(wrappedValue: LocalContactsStore())
     }
 
     var body: some Scene {
@@ -24,6 +26,7 @@ struct SafeDriveAIApp: App {
                 .environmentObject(monitor)
                 .environmentObject(monitor.camera)
                 .environmentObject(account)
+                .environmentObject(contactsStore)
                 .preferredColorScheme(settings.appearanceMode.colorScheme)
                 .tint(Theme.accent)
         }

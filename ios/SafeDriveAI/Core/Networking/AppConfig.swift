@@ -1,5 +1,7 @@
 import Foundation
 
+// Only used by the (currently dormant) networking layer — see APIClient.swift.
+// The standalone demo build runs fully on-device and never reads this.
 enum AppConfig {
     /// The backend host. Debug builds point at a local dev server (see
     /// backend/README for `uvicorn` setup); Release always requires HTTPS,

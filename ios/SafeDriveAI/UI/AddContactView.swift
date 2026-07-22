@@ -2,13 +2,14 @@ import SwiftUI
 
 struct AddContactView: View {
     @Environment(\.dismiss) private var dismiss
-    let onAdd: (EmergencyContactDTO) -> Void
+    /// Reports the entered fields to the caller, which owns the store. Kept
+    /// closure-based (rather than touching the store directly) so the sheet
+    /// stays a pure form and doesn't depend on how contacts are persisted.
+    let onAdd: (_ name: String, _ phoneNumber: String, _ email: String?) -> Void
 
     @State private var name = ""
     @State private var phoneNumber = ""
     @State private var email = ""
-    @State private var isSaving = false
-    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
@@ -25,13 +26,6 @@ struct AddContactView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 }
-
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundStyle(Theme.warning)
-                    }
-                }
             }
             .navigationTitle("Add Contact")
             .navigationBarTitleDisplayMode(.inline)
@@ -40,32 +34,15 @@ struct AddContactView: View {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    if isSaving {
-                        ProgressView()
-                    } else {
-                        Button("Save") { save() }
-                            .disabled(name.isEmpty || phoneNumber.isEmpty)
-                    }
+                    Button("Save") { save() }
+                        .disabled(name.isEmpty || phoneNumber.isEmpty)
                 }
             }
         }
     }
 
     private func save() {
-        isSaving = true
-        Task {
-            do {
-                let contact = try await APIClient.shared.addContact(
-                    name: name,
-                    phoneNumber: phoneNumber,
-                    email: email.isEmpty ? nil : email
-                )
-                onAdd(contact)
-                dismiss()
-            } catch {
-                errorMessage = "Couldn't save contact. Check the phone number and try again."
-                isSaving = false
-            }
-        }
+        onAdd(name, phoneNumber, email.isEmpty ? nil : email)
+        dismiss()
     }
 }

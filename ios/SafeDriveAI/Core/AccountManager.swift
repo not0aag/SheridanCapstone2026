@@ -1,56 +1,56 @@
 import Foundation
 
-/// Wraps APIClient for the login/registration flow used by the Emergency
-/// Alerts feature. There's no other account-related state in the app —
-/// monitoring itself is fully on-device and needs no login.
+/// Drives the login/registration flow for the Emergency Alerts feature.
+///
+/// For the standalone demo build this is backed by an on-device
+/// `LocalAccountStore` (UserDefaults) instead of the networked APIClient.
+/// The public interface is unchanged, so AccountView needs no edits — flip
+/// the store back to `APIClient.shared` to re-enable the server-backed flow.
+///
+/// The methods stay `async` even though the local store is synchronous, so
+/// existing `await account.login(...)` call sites compile unchanged.
 @MainActor
 final class AccountManager: ObservableObject {
     @Published private(set) var isAuthenticated: Bool
     @Published var lastErrorMessage: String?
 
-    init() {
-        isAuthenticated = false
-        Task { await refreshAuthState() }
+    private let store: LocalAccountStore
+
+    init(store: LocalAccountStore = LocalAccountStore()) {
+        self.store = store
+        // A previously logged-in driver stays logged in across relaunches.
+        isAuthenticated = store.isLoggedIn
     }
 
     func refreshAuthState() async {
-        isAuthenticated = await APIClient.shared.isAuthenticated
+        isAuthenticated = store.isLoggedIn
     }
 
     func register(email: String, password: String, fullName: String) async -> Bool {
         do {
-            _ = try await APIClient.shared.register(email: email, password: password, fullName: fullName)
+            try store.register(email: email, password: password, fullName: fullName)
             return await login(email: email, password: password)
         } catch {
-            lastErrorMessage = message(for: error)
+            lastErrorMessage = "That email is already registered. Try logging in instead."
             return false
         }
     }
 
     func login(email: String, password: String) async -> Bool {
-        do {
-            _ = try await APIClient.shared.login(email: email, password: password)
-            isAuthenticated = true
-            lastErrorMessage = nil
-            return true
-        } catch {
-            lastErrorMessage = message(for: error)
+        guard store.login(email: email, password: password) else {
+            lastErrorMessage = store.hasProfile
+                ? "Incorrect email or password."
+                : "No account yet — tap Sign Up to create one."
             isAuthenticated = false
             return false
         }
+        isAuthenticated = true
+        lastErrorMessage = nil
+        return true
     }
 
     func logout() async {
-        await APIClient.shared.logout()
+        store.logout()
         isAuthenticated = false
-    }
-
-    private func message(for error: Error) -> String {
-        switch error as? APIError {
-        case .server(_, let message): return message
-        case .notAuthenticated: return "Please log in again."
-        case .transport: return "Couldn't reach the server. Check your connection."
-        case .decoding, .none: return "Something went wrong. Please try again."
-        }
     }
 }

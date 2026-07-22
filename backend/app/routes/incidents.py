@@ -6,6 +6,8 @@ from typing import Optional
 from app.database import get_db
 from app.models.incident import Incident
 from app.models.trip import Trip
+from app.models.user import User
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
 
@@ -33,9 +35,17 @@ class IncidentResponse(BaseModel):
 
 # Create incident endpoint
 @router.post("/", response_model=IncidentResponse, status_code=201)
-def create_incident(incident_data: IncidentCreate, db: Session = Depends(get_db)):
-    # Verify trip exists
-    trip = db.query(Trip).filter(Trip.id == incident_data.trip_id).first()
+def create_incident(
+    incident_data: IncidentCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Verify trip exists and belongs to the caller
+    trip = (
+        db.query(Trip)
+        .filter(Trip.id == incident_data.trip_id, Trip.user_id == current_user.id)
+        .first()
+    )
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
     
@@ -68,28 +78,47 @@ def create_incident(incident_data: IncidentCreate, db: Session = Depends(get_db)
 
 # Get all incidents for a trip
 @router.get("/trip/{trip_id}", response_model=list[IncidentResponse])
-def get_trip_incidents(trip_id: int, db: Session = Depends(get_db)):
-    # Verify trip exists
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+def get_trip_incidents(
+    trip_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Verify trip exists and belongs to the caller
+    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.user_id == current_user.id).first()
     if not trip:
         raise HTTPException(status_code=404, detail="Trip not found")
-    
+
     incidents = db.query(Incident).filter(Incident.trip_id == trip_id).order_by(Incident.timestamp.desc()).all()
     return incidents
 
 # Get specific incident
 @router.get("/{incident_id}", response_model=IncidentResponse)
-def get_incident(incident_id: int, db: Session = Depends(get_db)):
-    incident = db.query(Incident).filter(Incident.id == incident_id).first()
-    
+def get_incident(
+    incident_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    incident = (
+        db.query(Incident)
+        .join(Trip)
+        .filter(Incident.id == incident_id, Trip.user_id == current_user.id)
+        .first()
+    )
+
     if not incident:
         raise HTTPException(status_code=404, detail="Incident not found")
-    
+
     return incident
 
 # Get all incidents for a user (across all trips)
 @router.get("/user/{user_id}", response_model=list[IncidentResponse])
-def get_user_incidents(user_id: int, db: Session = Depends(get_db)):
+def get_user_incidents(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to view these incidents")
     incidents = (
         db.query(Incident)
         .join(Trip)

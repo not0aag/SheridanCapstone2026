@@ -213,12 +213,15 @@ final class DriverMonitor: ObservableObject {
 
     // MARK: Prolonged-distraction alert
 
-    /// Best-effort: the local audio/haptic alert (AlertPlayer) has already
-    /// fired regardless of this call's outcome, so a network failure here
-    /// is non-fatal and silently swallowed.
+    /// Notifying trusted contacts by SMS runs through the backend + Twilio,
+    /// which is intentionally deferred in the standalone demo build. The local
+    /// audio/haptic alert (AlertPlayer) has already fired earlier in the
+    /// pipeline, so the driver is warned regardless. Re-enable the outbound
+    /// notification by restoring the `APIClient.shared.sendDistractionAlert`
+    /// call here once the backend/Twilio path is reconnected.
     private func sendDistractionAlert() async {
         guard settings.smsAlertsEnabled else { return }
-        _ = try? await APIClient.shared.sendDistractionAlert(latitude: nil, longitude: nil)
+        // No-op until the backend/Twilio integration is reconnected.
     }
 
     // MARK: Background behaviour

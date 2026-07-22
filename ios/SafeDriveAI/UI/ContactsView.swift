@@ -2,11 +2,9 @@ import SwiftUI
 
 struct ContactsView: View {
     @EnvironmentObject private var account: AccountManager
+    @EnvironmentObject private var contactsStore: LocalContactsStore
 
-    @State private var contacts: [EmergencyContactDTO] = []
     @State private var showAddSheet = false
-    @State private var isLoading = false
-    @State private var errorMessage: String?
 
     var body: some View {
         Form {
@@ -18,13 +16,11 @@ struct ContactsView: View {
                 }
             } else {
                 Section {
-                    if isLoading && contacts.isEmpty {
-                        ProgressView()
-                    } else if contacts.isEmpty {
+                    if contactsStore.contacts.isEmpty {
                         Text("No trusted contacts yet.")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(contacts) { contact in
+                        ForEach(contactsStore.contacts) { contact in
                             VStack(alignment: .leading) {
                                 Text(contact.name)
                                 Text(contact.phoneNumber)
@@ -40,46 +36,20 @@ struct ContactsView: View {
                 } footer: {
                     Text("These contacts will receive a text message if you're detected as continuously distracted for about 10 seconds while driving.")
                 }
-
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage)
-                            .foregroundStyle(Theme.warning)
-                    }
-                }
             }
         }
         .navigationTitle("Trusted Contacts")
         .navigationBarTitleDisplayMode(.inline)
-        .task { await refresh() }
-        .refreshable { await refresh() }
         .sheet(isPresented: $showAddSheet) {
-            AddContactView { newContact in
-                contacts.append(newContact)
+            AddContactView { name, phoneNumber, email in
+                contactsStore.add(name: name, phoneNumber: phoneNumber, email: email)
             }
-        }
-    }
-
-    private func refresh() async {
-        guard account.isAuthenticated else { return }
-        isLoading = true
-        defer { isLoading = false }
-        do {
-            contacts = try await APIClient.shared.fetchContacts()
-            errorMessage = nil
-        } catch {
-            errorMessage = "Couldn't load contacts."
-            await account.refreshAuthState()
         }
     }
 
     private func delete(at offsets: IndexSet) {
-        let toDelete = offsets.map { contacts[$0] }
-        contacts.remove(atOffsets: offsets)
-        Task {
-            for contact in toDelete {
-                try? await APIClient.shared.deleteContact(id: contact.id)
-            }
+        for contact in offsets.map({ contactsStore.contacts[$0] }) {
+            contactsStore.delete(id: contact.id)
         }
     }
 }
