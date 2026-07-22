@@ -13,12 +13,12 @@ struct SettingsView: View {
                     sensitivityRow(
                         title: "Drowsiness",
                         value: $settings.drowsinessSensitivity,
-                        detail: "How quickly eye-closure patterns trigger an alert."
+                        detail: "How much eye closure counts as drowsy."
                     )
                     sensitivityRow(
                         title: "Distraction",
                         value: $settings.distractionSensitivity,
-                        detail: "How far and how long you can look away before an alert."
+                        detail: "How far your head or eyes need to turn from the road."
                     )
                 } header: {
                     Text("Sensitivity")
@@ -98,7 +98,7 @@ struct SettingsView: View {
 
                 Section("About") {
                     LabeledContent("Version", value: appVersion)
-                    Text("SafeDrive AI monitors for drowsiness and distraction using the front camera. All analysis runs on-device with Apple's Vision framework. No video or biometric data is stored or transmitted. If you enable Emergency Alerts, a text notification (no video, images, or biometric data) is sent to your chosen contacts when prolonged distraction is detected.")
+                    Text("SafeDrive AI monitors for drowsiness and distraction using the front camera. All analysis runs on-device — no video or biometric data is stored or transmitted.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
