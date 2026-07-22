@@ -1,5 +1,14 @@
 import Foundation
 
+// DORMANT IN THE STANDALONE DEMO BUILD.
+// This whole networking layer is intact and tested but currently bypassed:
+// the app runs fully on-device via Core/Local/LocalAccountStore and
+// LocalContactsStore (see those files), and DriverMonitor.sendDistractionAlert
+// is a local no-op. It is NOT dead code — it's the server-backed path kept
+// ready to scale. To reconnect, flip the call sites in AccountManager,
+// ContactsView/AddContactView, and DriverMonitor back to `APIClient.shared`
+// and point AppConfig at a live backend.
+
 enum APIError: Error {
     case notAuthenticated
     case server(status: Int, message: String)

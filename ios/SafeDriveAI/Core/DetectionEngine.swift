@@ -197,15 +197,16 @@ final class DetectionEngine {
     /// Longest continuous run (in ms) where `key` is true.
     private func longestRun(of samples: [Sample], matching key: KeyPath<Sample, Bool>) -> (Int64, Int) {
         var best: Int64 = 0, bestCount = 0
-        var runStart: Int64?, runCount = 0
+        var run: (startMs: Int64, count: Int)?
         for sample in samples {
             if sample[keyPath: key] {
-                if runStart == nil { runStart = sample.tMs; runCount = 0 }
-                runCount += 1
-                let length = sample.tMs - runStart!
-                if length > best { best = length; bestCount = runCount }
+                let started = run ?? (startMs: sample.tMs, count: 0)
+                let current = (startMs: started.startMs, count: started.count + 1)
+                run = current
+                let length = sample.tMs - current.startMs
+                if length > best { best = length; bestCount = current.count }
             } else {
-                runStart = nil
+                run = nil
             }
         }
         return (best, bestCount)
