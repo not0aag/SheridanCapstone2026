@@ -201,30 +201,49 @@ enum Theme {
 /// The type scale, as named roles rather than raw sizes, so a screen never
 /// invents its own. SF Pro throughout (the system face) — `.rounded` and
 /// other designs are deliberately absent from this system.
+///
+/// ## Why these are text styles, not point sizes
+///
+/// The design sheet specifies this scale in points (34 / 28 / 17 / 16 / 15
+/// / 13 / 12 / 11). Every one of those lands on an Apple text style at its
+/// default size, so the roles below are expressed as text styles instead of
+/// `.system(size:)`. That buys Dynamic Type for free: a driver who has
+/// bumped their text size — extremely common in the over-50 cohort most
+/// exposed to fatigue crashes — gets larger type everywhere, which
+/// `.system(size:)` would have silently refused to do.
+///
+/// The hero numerals are the deliberate exception: they stay at fixed
+/// points, because a 68pt timer scaled to accessibility sizes would push
+/// the stat cards off screen. They're paired with `minimumScaleFactor` at
+/// their call sites instead, the same trade-off Apple's own Clock app makes.
 extension Font {
-    /// 34pt Bold — onboarding headlines.
-    static let sdDisplay = Font.system(size: 34, weight: .bold)
-    /// 28pt Bold — screen (large) titles.
-    static let sdTitle = Font.system(size: 28, weight: .bold)
-    /// 52pt Semibold — score numerals. Pair with `.monospacedDigit()`.
+    /// 34pt Bold — onboarding headlines. (`.largeTitle`)
+    static let sdDisplay = Font.largeTitle.weight(.bold)
+    /// 28pt Bold — screen (large) titles. (`.title`)
+    static let sdTitle = Font.title.weight(.bold)
+    /// 52pt Semibold — score numerals. Fixed; pair with `.monospacedDigit()`.
     static let sdHeroNumeral = Font.system(size: 52, weight: .semibold)
-    /// 68pt Semibold — the trip timer. Pair with `.monospacedDigit()`.
+    /// 68pt Semibold — the trip timer. Fixed; pair with `.monospacedDigit()`.
     static let sdTimer = Font.system(size: 68, weight: .semibold)
     /// 17pt Semibold — the emphasized line in a two-line caption block.
-    static let sdLead = Font.system(size: 17, weight: .semibold)
-    /// 16pt Regular — body copy.
-    static let sdBody = Font.system(size: 16, weight: .regular)
-    /// 15pt Medium — list row titles.
-    static let sdRow = Font.system(size: 15, weight: .medium)
-    /// 13pt Regular — captions and row detail.
-    static let sdCaption = Font.system(size: 13, weight: .regular)
-    /// 12pt Regular — the smallest supporting text.
-    static let sdMeta = Font.system(size: 12, weight: .regular)
-    /// 11pt Semibold UPPERCASE — section labels. Always pair with
-    /// `.tracking(1.54)` via the `.sdSectionLabel()` modifier.
-    static let sdSectionLabel = Font.system(size: 11, weight: .semibold)
-    /// 16pt Semibold — button labels.
-    static let sdButton = Font.system(size: 16, weight: .semibold)
+    static let sdLead = Font.headline
+    /// Body copy. (`.body`)
+    static let sdBody = Font.body
+    /// 15pt Medium — list row titles. (`.subheadline`)
+    static let sdRow = Font.subheadline.weight(.medium)
+    /// 13pt — captions and row detail. (`.footnote`)
+    static let sdCaption = Font.footnote
+    /// 12pt — the smallest supporting text. (`.caption`)
+    static let sdMeta = Font.caption
+    /// 11pt Semibold UPPERCASE — section labels. Always applied through the
+    /// `.sdSectionLabel()` modifier, which adds the casing and tracking.
+    static let sdSectionLabel = Font.caption2.weight(.semibold)
+    /// Button labels. (`.body` Semibold)
+    static let sdButton = Font.body.weight(.semibold)
+    /// 20pt Semibold — the value in a monitoring stat card. (`.title3`)
+    static let sdStatValue = Font.title3.weight(.semibold)
+    /// 19pt Semibold — trip scores and small stat-card numerals.
+    static let sdScore = Font.title3.weight(.semibold)
 }
 
 extension View {
@@ -237,12 +256,21 @@ extension View {
             .foregroundStyle(Theme.textSecondary)
     }
 
-    /// 10pt Semibold, uppercase, 0.18em tracking — the tighter label used
-    /// under hero numerals (score ring caption, "TRIP DURATION").
+    /// Uppercase, wider 0.18em tracking — the label used under hero numerals
+    /// (score ring caption, "TRIP DURATION").
     func sdHeroLabel() -> some View {
-        self.font(.system(size: 11, weight: .semibold))
+        self.font(.sdSectionLabel)
             .textCase(.uppercase)
             .tracking(11 * 0.18)
+            .foregroundStyle(Theme.textSecondary)
+    }
+
+    /// The smallest label in the system — stat-card captions. Uppercase,
+    /// 0.1em tracking.
+    func sdStatLabel() -> some View {
+        self.font(.sdSectionLabel)
+            .textCase(.uppercase)
+            .tracking(10 * 0.1)
             .foregroundStyle(Theme.textSecondary)
     }
 

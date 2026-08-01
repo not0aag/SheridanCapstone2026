@@ -15,16 +15,15 @@ struct MonitoringView: View {
     let namespace: Namespace.ID
 
     @State private var showSettings = false
-    /// True once the driver has dismissed the full-bleed takeover for the
-    /// current alert episode. Re-arms on every state change, so a new alert
-    /// always takes the screen again.
-    @State private var alertAcknowledged = false
 
     private var isPaused: Bool {
         if case .paused = monitor.phase { return true }
         return false
     }
     private var isAlerting: Bool { monitor.driverState != .safe }
+    /// Presentation is owned by `DriverMonitor`/`AlertLifecycle`, not by this
+    /// view, precisely because it advances on a timer rather than on a tap.
+    private var presentation: AlertPresentation { monitor.alertPresentation }
 
     var body: some View {
         ZStack {
@@ -36,13 +35,15 @@ struct MonitoringView: View {
             VStack(spacing: 0) {
                 header
 
-                if monitor.showCheckInBanner && !isAlerting {
+                if monitor.monitoringInterrupted {
+                    interruptedBanner
+                } else if monitor.showCheckInBanner && !isAlerting {
                     checkInBanner
                 }
 
                 Spacer(minLength: 0)
 
-                if isAlerting && alertAcknowledged {
+                if isAlerting && presentation == .persistent {
                     acknowledgedAlertBanner
                         .padding(.bottom, 20)
                 }
@@ -67,30 +68,36 @@ struct MonitoringView: View {
             }
             .padding(.horizontal, 24)
 
-            if isAlerting && !alertAcknowledged {
+            if presentation == .takeover {
                 AlertOverlayView(
                     state: monitor.driverState,
                     escalationNote: escalationNote
                 ) {
-                    alertAcknowledged = true
+                    monitor.acknowledgeAlert()
                 }
                 .transition(.opacity)
                 .zIndex(1)
             }
         }
         .animation(Motion.alertImpact, value: isAlerting)
-        .animation(Motion.springy, value: alertAcknowledged)
+        .animation(Motion.springy, value: presentation)
         .onChange(of: monitor.driverState) { newState in
-            // Any transition re-arms the takeover, and one sharp cue marks
-            // entry into an alert — layered on top of AlertPlayer's own
-            // continuous haptic loop, never a replacement for it.
-            alertAcknowledged = false
-            if newState != .safe { Haptics.warning() }
+            // One sharp cue marks entry into an alert — layered on top of
+            // AlertPlayer's own continuous haptic loop, never a replacement
+            // for it. The takeover itself is driven by AlertLifecycle.
+            guard newState != .safe else { return }
+            Haptics.warning()
+            // VoiceOver users get no benefit from a full-screen colour
+            // change; announce the alert instead, at the interrupting
+            // priority an emergency warrants.
+            UIAccessibility.post(
+                notification: .announcement,
+                argument: newState == .drowsy
+                    ? "Drowsiness detected. Pull over safely."
+                    : "Distraction detected. Eyes on the road."
+            )
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
-        .sheet(item: $monitor.lastTripSummary) { summary in
-            TripSummaryView(summary: summary)
-        }
         .sheet(item: composerBinding) { draft in
             MessageComposerView(draft: draft) { monitor.pendingMessageComposer = nil }
         }
@@ -210,7 +217,7 @@ struct MonitoringView: View {
                 .tracking(10 * 0.14)
                 .foregroundStyle(Theme.textSecondary)
             Text(value)
-                .font(.system(size: 20, weight: .semibold))
+                .font(.sdStatValue)
                 .monospacedDigit()
                 .foregroundStyle(tint ?? Theme.textPrimary)
         }
@@ -225,7 +232,7 @@ struct MonitoringView: View {
     private var privacyBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: "camera.fill")
-                .font(.system(size: 15))
+                .font(.sdBody)
             Text("Camera active. Eyes tracked on device only.")
                 .font(.sdCaption)
                 .fixedSize(horizontal: false, vertical: true)
@@ -238,9 +245,10 @@ struct MonitoringView: View {
         .accessibilityElement(children: .combine)
     }
 
-    /// The compact form the alert collapses to once acknowledged. The sound
-    /// and haptics are still running — this is what keeps that honest on
-    /// screen instead of the alert appearing to have been dismissed.
+    /// What the takeover collapses into — either on its own after a few
+    /// seconds, or immediately if the driver acknowledged. Haptics are still
+    /// running and the tone is only stepped down, never off, so this is what
+    /// keeps the screen honest about an alert that is still active.
     private var acknowledgedAlertBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: monitor.driverState == .drowsy
@@ -264,6 +272,29 @@ struct MonitoringView: View {
         .accessibilityElement(children: .combine)
     }
 
+    /// Shown when the OS has taken the camera — a call, Control Center,
+    /// another app. Red, because a driver who believes they're being watched
+    /// and isn't isn't merely uninformed, they're worse off than if the app
+    /// were closed. Spoken aloud too; see DriverMonitor.observeLifecycle.
+    private var interruptedBanner: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 15))
+            Text("Monitoring paused — the camera is in use elsewhere.")
+                .font(.sdCaption.weight(.semibold))
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
+        }
+        .foregroundStyle(Theme.onAlert)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Theme.alert, in: RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
+        .padding(.top, 12)
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .animation(Motion.springy, value: monitor.monitoringInterrupted)
+        .accessibilityElement(children: .combine)
+    }
+
     /// A soft, tiered early-warning — below a real alert, not a replacement
     /// for it. Purely informational: requiring a tap here would violate this
     /// screen's own no-interaction rule and would ask a possibly-drowsy
@@ -271,7 +302,7 @@ struct MonitoringView: View {
     private var checkInBanner: some View {
         HStack(spacing: 12) {
             Image(systemName: "questionmark.circle.fill")
-                .font(.system(size: 15))
+                .font(.sdBody)
             Text("Just checking in — stay focused on the road.")
                 .font(.sdCaption.weight(.semibold))
             Spacer(minLength: 0)

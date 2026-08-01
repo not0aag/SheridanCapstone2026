@@ -49,6 +49,15 @@ final class DriverMonitor: ObservableObject {
     /// to present the native SMS composer. The driver still sends it
     /// themselves — this never sends silently in the background.
     @Published var pendingMessageComposer: MessageDraft?
+    /// How the current alert should be presented. Advances on its own —
+    /// the driver never has to touch the phone to get the full-bleed
+    /// takeover out of the way. See AlertLifecycle.
+    @Published private(set) var alertPresentation: AlertPresentation = .none
+    /// True when monitoring stopped because the OS interrupted the camera
+    /// (an incoming call, Control Center, another app taking the camera).
+    /// Surfaced so the driver is never left believing they're being watched
+    /// when they aren't.
+    @Published private(set) var monitoringInterrupted = false
 
     // MARK: Components
     let camera = CameraService()
@@ -62,7 +71,12 @@ final class DriverMonitor: ObservableObject {
     private let distractionTimer = DistractionTimer()
     private let drowsinessTrendWatcher = DrowsinessTrendWatcher()
     private let voiceCheckIn = VoiceCheckIn()
+    private let alertLifecycle = AlertLifecycle()
     private var cancellables = Set<AnyCancellable>()
+    /// Timestamp of the most recent frame, so `acknowledgeAlert()` — which
+    /// arrives from a tap, not from the camera — can be placed on the same
+    /// clock the lifecycle uses.
+    private var lastFrameMs: Int64 = 0
 
     init(settings: AppSettings, calibration: CalibrationManager, contactsStore: LocalContactsStore) {
         self.settings = settings
@@ -90,6 +104,9 @@ final class DriverMonitor: ObservableObject {
         engine.reset()
         distractionTimer.reset()
         drowsinessTrendWatcher.reset()
+        alertLifecycle.reset()
+        alertPresentation = .none
+        monitoringInterrupted = false
         tripLog.startTrip()
         driverState = .safe
         sessionStart = .now
@@ -105,6 +122,9 @@ final class DriverMonitor: ObservableObject {
         phase = .idle
         sessionStart = nil
         driverState = .safe
+        alertLifecycle.reset()
+        alertPresentation = .none
+        monitoringInterrupted = false
         alerts.endSession()
         camera.stop()
         speedGate.stop()
@@ -120,6 +140,16 @@ final class DriverMonitor: ObservableObject {
         camera.setFrameRate(30)
     }
 
+    /// Optional acknowledgement of an active alert. Collapses the takeover
+    /// immediately and mutes the *tone* for 30 seconds; haptics and the
+    /// on-screen banner continue, and the tone returns if the driver is
+    /// still in danger when that window closes. Never required — the alert
+    /// steps itself down without this (see AlertLifecycle).
+    func acknowledgeAlert() {
+        alertLifecycle.acknowledge(atMs: lastFrameMs)
+        alertPresentation = .persistent
+    }
+
     func cancelCalibration() {
         calibration.cancel()
         if phase == .calibrating {
@@ -133,6 +163,7 @@ final class DriverMonitor: ObservableObject {
     private func handle(_ snapshot: FaceSnapshot) {
         faceDetected = snapshot.faceDetected
         overlay = snapshot.overlay
+        lastFrameMs = snapshot.timestampMs
 
         switch phase {
         case .calibrating:
@@ -155,6 +186,8 @@ final class DriverMonitor: ObservableObject {
                     engine.reset()
                     distractionTimer.reset()
                     drowsinessTrendWatcher.reset()
+                    alertLifecycle.reset()
+                    alertPresentation = .none
                     driverState = .safe
                     alerts.update(for: .safe)
                 }
@@ -174,6 +207,15 @@ final class DriverMonitor: ObservableObject {
             offRoadRate = assessment.offRoadRate
             windowReady = assessment.ready
             alerts.update(for: assessment.state)
+
+            // How loudly and how visibly to present it. The takeover
+            // collapses and the tone steps down on their own timetable, so
+            // a driver with both hands on the wheel is never stuck with a
+            // full-screen alarm they can't dismiss.
+            let presentation = alertLifecycle.ingest(state: assessment.state, atMs: snapshot.timestampMs)
+            alertPresentation = presentation.presentation
+            alerts.setTone(muted: presentation.toneMuted, attenuated: presentation.toneAttenuated)
+
             debug = Self.debugSignals(for: snapshot, baseline: baseline, settings: settings)
             if assessment.ready {
                 tripLog.ingest(state: assessment.state, perclos: assessment.perclos, offRoadRate: assessment.offRoadRate)
@@ -271,6 +313,35 @@ final class DriverMonitor: ObservableObject {
     // MARK: Background behaviour
 
     private func observeLifecycle() {
+        // The OS can take the camera away mid-drive — an incoming call,
+        // Control Center, another app. ARKit simply stops delivering
+        // frames, which used to leave the driver looking at a calm
+        // "Monitoring" pill while nothing was actually being monitored.
+        // Debounced, because a healthy session start also passes through
+        // isRunning == false for a moment.
+        camera.$isRunning
+            .removeDuplicates()
+            .debounce(for: .seconds(2), scheduler: DispatchQueue.main)
+            .sink { [weak self] running in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    let monitoring: Bool
+                    switch self.phase {
+                    case .monitoring, .paused: monitoring = true
+                    case .idle, .calibrating: monitoring = false
+                    }
+                    let interrupted = monitoring && !running
+                    guard interrupted != self.monitoringInterrupted else { return }
+                    self.monitoringInterrupted = interrupted
+                    // Say it out loud. A banner is no use to someone who is
+                    // — correctly — looking at the road.
+                    if interrupted {
+                        self.voiceCheckIn.speak("SafeDrive monitoring has paused.")
+                    }
+                }
+            }
+            .store(in: &cancellables)
+
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification, object: nil, queue: .main
         ) { [weak self] _ in

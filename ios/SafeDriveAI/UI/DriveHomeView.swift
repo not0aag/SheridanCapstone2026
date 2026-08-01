@@ -63,7 +63,7 @@ struct DriveHomeView: View {
                                 Image(systemName: "checkmark")
                                     .font(.system(size: 13, weight: .semibold))
                                 Text("Ready")
-                                    .font(.system(size: 13, weight: .medium))
+                                    .font(.sdCaption.weight(.medium))
                             }
                             .foregroundStyle(Theme.safe)
                         }

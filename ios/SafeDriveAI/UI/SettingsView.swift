@@ -130,12 +130,16 @@ struct SettingsView: View {
                     }
                     Slider(value: $settings.speedThresholdKmh, in: 0...40, step: 5)
                         .tint(Theme.gold)
+                        .accessibilityLabel("Speed threshold")
+                }
+                if settings.speedThresholdKmh > 0 {
+                    SpeedGateNotice(gate: monitor.speedGate)
                 }
                 Toggle("Developer overlay", isOn: $settings.debugOverlayEnabled)
             } header: {
                 sectionHeader("Advanced")
             } footer: {
-                sectionFooter("The speed gate uses GPS, so monitoring pauses when you're stopped or parked. The developer overlay shows the live camera and raw signal values — for tuning, not for driving with.")
+                sectionFooter("The speed gate uses GPS, so monitoring pauses when you're stopped or parked. If location is unavailable the threshold is ignored and monitoring keeps running — SafeDrive never goes quiet just because it can't measure your speed. The developer overlay shows the live camera and raw signal values — for tuning, not for driving with.")
             }
             .listRowBackground(Theme.surface)
 
@@ -144,6 +148,11 @@ struct SettingsView: View {
                     HowItWorksView()
                 } label: {
                     Label("How SafeDrive works", systemImage: "questionmark.circle.fill")
+                }
+                NavigationLink {
+                    AccountView()
+                } label: {
+                    Label("Account", systemImage: "person.crop.circle")
                 }
                 LabeledContent("Version", value: appVersion)
             } header: {
@@ -164,7 +173,7 @@ struct SettingsView: View {
 
     private func sectionFooter(_ text: String) -> some View {
         Text(text)
-            .font(.system(size: 11))
+            .font(.sdMeta)
             .foregroundStyle(Theme.textSecondary)
     }
 
@@ -179,6 +188,26 @@ struct SettingsView: View {
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
+}
+
+/// Tells the driver when the speed threshold they set isn't actually doing
+/// anything. The gate fails open by design, so silence here would let
+/// someone believe monitoring pauses when parked while it never does.
+/// Its own view so it can `@ObservedObject` the gate and update live as
+/// location permission changes underneath Settings.
+private struct SpeedGateNotice: View {
+    @ObservedObject var gate: SpeedGate
+
+    var body: some View {
+        if !gate.isLocationAvailable {
+            Label(
+                "Location is off, so the speed threshold is ignored — monitoring runs the whole time.",
+                systemImage: "location.slash.fill"
+            )
+            .font(.sdCaption)
+            .foregroundStyle(Theme.gold)
+        }
     }
 }
 
@@ -200,7 +229,7 @@ private struct SensitivityRow: View {
                 Text(title)
                 Spacer()
                 Text(zoneLabel(for: value))
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.sdCaption.weight(.medium))
                     .foregroundStyle(Theme.textSecondary)
                     .scaleEffect(labelPulse ? 1.15 : 1)
             }

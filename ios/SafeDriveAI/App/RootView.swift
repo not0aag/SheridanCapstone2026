@@ -48,6 +48,15 @@ struct RootView: View {
         .animation(.easeInOut(duration: 0.3), value: monitor.phase)
         .animation(.easeInOut(duration: 0.3), value: didOnboard)
         .animation(.easeInOut(duration: 0.3), value: camera.permissionDenied)
+        // Presented from the root, not from MonitoringView. `stopMonitoring()`
+        // sets `phase = .idle` before publishing the summary, which swaps
+        // MonitoringView out for the tab shell — a sheet attached down there
+        // would lose its host mid-presentation and never appear. Ending a
+        // trip is exactly when the driver expects this, so it has to be
+        // hosted by a view that outlives the transition.
+        .sheet(item: $monitor.lastTripSummary) { summary in
+            TripSummaryView(summary: summary)
+        }
     }
 }
 

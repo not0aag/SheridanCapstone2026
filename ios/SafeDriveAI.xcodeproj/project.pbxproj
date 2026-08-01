@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FE2E9EEC34594DD5B6266F3F /* AlertLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA73A1326EC4D57B70AE416 /* AlertLifecycleTests.swift */; };
+		3DECACACD72941E29777B73E /* AlertLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2300887A2B29482EA1BAC62B /* AlertLifecycle.swift */; };
 		4FB7AA0BE937453DA613880E /* DriveHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DE145A0B9CB485B9749141B /* DriveHomeView.swift */; };
 		EF093473FB08424E8559A2EE /* AlertOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DF79007FB504DEC8FB09E4E /* AlertOverlayView.swift */; };
 		968B444B3B30461FAC0CDDF5 /* FaceMeshView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF3BB2EF708346E6B910327F /* FaceMeshView.swift */; };
@@ -66,6 +68,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		4CA73A1326EC4D57B70AE416 /* AlertLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertLifecycleTests.swift; sourceTree = "<group>"; };
+		2300887A2B29482EA1BAC62B /* AlertLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertLifecycle.swift; sourceTree = "<group>"; };
 		9DE145A0B9CB485B9749141B /* DriveHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveHomeView.swift; sourceTree = "<group>"; };
 		9DF79007FB504DEC8FB09E4E /* AlertOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertOverlayView.swift; sourceTree = "<group>"; };
 		BF3BB2EF708346E6B910327F /* FaceMeshView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FaceMeshView.swift; sourceTree = "<group>"; };
@@ -142,6 +146,7 @@
 		4FD6AF3847B96B8029785AD6 /* SafeDriveAITests */ = {
 			isa = PBXGroup;
 			children = (
+				4CA73A1326EC4D57B70AE416 /* AlertLifecycleTests.swift */,
 				A93FF452B3905DE4735160D8 /* CalibrationAndSignalTests.swift */,
 				B664B1F68949794C82325A2C /* DetectionEngineTests.swift */,
 				D7995B0F1F2D12932E998A90 /* DistractionTimerTests.swift */,
@@ -164,6 +169,7 @@
 		6A589CE94E13EF5BBC799C24 /* Alerts */ = {
 			isa = PBXGroup;
 			children = (
+				2300887A2B29482EA1BAC62B /* AlertLifecycle.swift */,
 				DE352DE23222AADB67B0DDB1 /* AlertPlayer.swift */,
 				BADA1DCD1BE294A92E251793 /* VoiceCheckIn.swift */,
 			);
@@ -323,6 +329,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3DECACACD72941E29777B73E /* AlertLifecycle.swift in Sources */,
 				4FB7AA0BE937453DA613880E /* DriveHomeView.swift in Sources */,
 				EF093473FB08424E8559A2EE /* AlertOverlayView.swift in Sources */,
 				968B444B3B30461FAC0CDDF5 /* FaceMeshView.swift in Sources */,
@@ -370,6 +377,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FE2E9EEC34594DD5B6266F3F /* AlertLifecycleTests.swift in Sources */,
 				3EC4737A27B096D7B7BD8636 /* CalibrationAndSignalTests.swift in Sources */,
 				7C4CD11D545291B13AA2B8E8 /* DetectionEngineTests.swift in Sources */,
 				E47DA29EB3C451A0383D4B0F /* DistractionTimerTests.swift in Sources */,

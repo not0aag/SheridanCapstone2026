@@ -23,7 +23,7 @@ struct TripSummaryView: View {
                     .padding(.top, 20)
 
                 Text(verdict)
-                    .font(.system(size: 15))
+                    .font(.sdBody)
                     .lineSpacing(3)
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)

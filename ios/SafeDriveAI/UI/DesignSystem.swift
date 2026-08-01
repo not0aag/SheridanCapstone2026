@@ -264,7 +264,7 @@ struct ListGroup<Content: View>: View {
                 .sdCard()
             if let footer {
                 Text(footer)
-                    .font(.system(size: 11))
+                    .font(.sdMeta)
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 16)
@@ -337,14 +337,11 @@ struct StatCard: View {
     var body: some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.system(size: 19, weight: .semibold))
+                .font(.sdScore)
                 .monospacedDigit()
                 .foregroundStyle(tint ?? Theme.textPrimary)
             Text(label)
-                .font(.system(size: 10, weight: .semibold))
-                .textCase(.uppercase)
-                .tracking(10 * 0.1)
-                .foregroundStyle(Theme.textSecondary)
+                .sdStatLabel()
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -424,7 +421,7 @@ struct SDSegmented<Value: Hashable>: View {
                     onChange?()
                 } label: {
                     Text(option.label)
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.sdCaption.weight(.medium))
                         .foregroundStyle(isActive ? Theme.textPrimary : Theme.textSecondary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 7)

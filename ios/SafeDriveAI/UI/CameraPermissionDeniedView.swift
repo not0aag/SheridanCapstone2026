@@ -40,7 +40,7 @@ struct CameraPermissionDeniedView: View {
                     .padding(.top, 32)
 
                 Text("SafeDrive can't detect drowsiness without the front camera. Turn it on in Settings — footage is never recorded or uploaded.")
-                    .font(.system(size: 15))
+                    .font(.sdBody)
                     .lineSpacing(4)
                     .foregroundStyle(Theme.textSecondary)
                     .multilineTextAlignment(.center)

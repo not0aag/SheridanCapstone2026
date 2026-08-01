@@ -1,42 +1,45 @@
 import SwiftUI
 
+/// The people SafeDrive will offer to text if a distraction episode drags on.
+///
+/// No account required. This screen used to hide everything behind a
+/// sign-up, which was left over from the server-backed design: contacts once
+/// lived on the backend and were texted by it. They don't any more — they're
+/// stored on this device and the message goes out through Apple's own
+/// composer from the driver's own number. Asking someone to invent a
+/// password before they can name an emergency contact was pure friction
+/// guarding nothing, and the safety feature most worth having set up is the
+/// one people actually finish setting up.
 struct ContactsView: View {
-    @EnvironmentObject private var account: AccountManager
     @EnvironmentObject private var contactsStore: LocalContactsStore
 
     @State private var showAddSheet = false
 
     var body: some View {
         Form {
-            if !account.isAuthenticated {
-                Section {
-                    NavigationLink("Log In / Sign Up") { AccountView() }
-                } footer: {
-                    Text("An account is needed so contacts can be texted from your name.")
-                }
-            } else {
-                Section {
-                    if contactsStore.contacts.isEmpty {
-                        Text("No trusted contacts yet.")
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(contactsStore.contacts) { contact in
-                            VStack(alignment: .leading) {
-                                Text(contact.name)
-                                Text(contact.phoneNumber)
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
-                            }
+            Section {
+                if contactsStore.contacts.isEmpty {
+                    Text("No trusted contacts yet.")
+                        .foregroundStyle(Theme.textSecondary)
+                } else {
+                    ForEach(contactsStore.contacts) { contact in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(contact.name)
+                            Text(contact.phoneNumber)
+                                .font(.sdMeta)
+                                .foregroundStyle(Theme.textSecondary)
                         }
-                        .onDelete(perform: delete)
+                        .accessibilityElement(children: .combine)
                     }
-                    Button("Add Contact") { showAddSheet = true }
-                } header: {
-                    Text("Trusted Contacts")
-                } footer: {
-                    Text("These contacts will receive a text message if you're detected as continuously distracted for about 10 seconds while driving.")
+                    .onDelete(perform: delete)
                 }
+                Button("Add contact") { showAddSheet = true }
+            } header: {
+                Text("Trusted contacts").sdSectionLabel()
+            } footer: {
+                Text("If you stay distracted for about 10 seconds, SafeDrive opens a message to these contacts with the text already written. You review it and press send — nothing is sent automatically, and their numbers never leave this phone.")
             }
+            .listRowBackground(Theme.surface)
         }
         .scrollContentBackground(.hidden)
         .background(Theme.background)

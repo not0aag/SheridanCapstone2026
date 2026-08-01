@@ -20,7 +20,9 @@ import UIKit
 /// Callers (`DriverMonitor`) only ever see `onSnapshot`/`start`/`stop`/
 /// `setFrameRate` — which backend is active is an implementation detail.
 final class CameraService: NSObject, ObservableObject {
-    /// True on hardware without a TrueDepth front camera, or the Simulator.
+    /// True when the device has a TrueDepth front camera (iPhone X, 2017,
+    /// and later) and can run ARKit face tracking. False on older hardware
+    /// and in the Simulator, which fall back to the Vision path below.
     let usingARKit = ARFaceTrackingConfiguration.isSupported
 
     let arSession = ARSession()

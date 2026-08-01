@@ -28,6 +28,12 @@ final class AlertPlayer {
     private enum Pattern { case silent, drowsy, distracted }
     private let patternLock = NSLock()
     private var pattern: Pattern = .silent
+    /// Tone silenced while the alert is still active — set when the driver
+    /// explicitly acknowledges. Haptics deliberately keep running.
+    private var toneMuted = false
+    /// Tone stepped down from continuous to a periodic pulse once the
+    /// opening burst is over. See AlertLifecycle for why.
+    private var toneAttenuated = false
     private var sampleClock: Double = 0
 
     // MARK: Session lifecycle
@@ -91,13 +97,21 @@ final class AlertPlayer {
     private func render(frameCount: AVAudioFrameCount, bufferList: UnsafeMutablePointer<AudioBufferList>) -> OSStatus {
         patternLock.lock()
         let active = pattern
+        let muted = toneMuted
+        let attenuated = toneAttenuated
         patternLock.unlock()
 
         let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
         for frame in 0..<Int(frameCount) {
             let t = sampleClock / sampleRate
             var sample: Float = 0
-            if soundEnabled {
+            // Attenuated mode: the pattern only sounds for the first second
+            // of every four, turning the continuous alarm into a periodic
+            // reminder. Computed per-frame from the same clock the
+            // synthesis uses, so the gate lands on cycle boundaries.
+            let audible = !muted
+                && (!attenuated || t.truncatingRemainder(dividingBy: 4.0) < 1.0)
+            if soundEnabled && audible {
                 switch active {
                 case .silent:
                     break
@@ -128,6 +142,17 @@ final class AlertPlayer {
     private func setPattern(_ new: Pattern) {
         patternLock.lock()
         pattern = new
+        patternLock.unlock()
+    }
+
+    /// Applies the presentation decision made by `AlertLifecycle`. Cheap and
+    /// idempotent — call it every frame. Only the tone is affected; the
+    /// haptic loop is never suppressed, so an acknowledged alert is still
+    /// physically present.
+    func setTone(muted: Bool, attenuated: Bool) {
+        patternLock.lock()
+        toneMuted = muted
+        toneAttenuated = attenuated
         patternLock.unlock()
     }
 

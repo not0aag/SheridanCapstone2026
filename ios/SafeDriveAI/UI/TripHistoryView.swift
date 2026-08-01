@@ -112,7 +112,7 @@ private struct TripRow: View {
             }
             Spacer(minLength: 0)
             Text("\(trip.safetyScore)")
-                .font(.system(size: 19, weight: .semibold))
+                .font(.sdScore)
                 .monospacedDigit()
                 .foregroundStyle(trip.safetyScore >= 85 ? Theme.safe : Theme.gold)
         }
