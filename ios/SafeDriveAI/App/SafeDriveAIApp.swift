@@ -11,11 +11,14 @@ struct SafeDriveAIApp: App {
     init() {
         let settings = AppSettings()
         let calibration = CalibrationManager()
+        let contactsStore = LocalContactsStore()
         _settings = StateObject(wrappedValue: settings)
         _calibration = StateObject(wrappedValue: calibration)
-        _monitor = StateObject(wrappedValue: DriverMonitor(settings: settings, calibration: calibration))
+        _contactsStore = StateObject(wrappedValue: contactsStore)
+        _monitor = StateObject(wrappedValue: DriverMonitor(
+            settings: settings, calibration: calibration, contactsStore: contactsStore
+        ))
         _account = StateObject(wrappedValue: AccountManager())
-        _contactsStore = StateObject(wrappedValue: LocalContactsStore())
     }
 
     var body: some Scene {

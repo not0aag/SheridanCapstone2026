@@ -3,32 +3,64 @@ import SwiftUI
 /// Full-screen block shown when camera access is denied or restricted — the
 /// app is unusable without it, so this replaces the whole UI rather than
 /// degrading one specific screen.
+///
+/// Deliberately muted: the camera glyph sits on `surface-2`, not amber. The
+/// only amber on screen is the CTA, because that's the one thing the user
+/// can actually act on.
 struct CameraPermissionDeniedView: View {
     var body: some View {
-        VStack(spacing: 20) {
-            Spacer()
-            Image(systemName: "camera.fill.badge.ellipsis")
-                .font(.system(size: 60))
-                .foregroundStyle(Theme.warning)
-            Text("Camera Access Needed")
-                .font(.title2.weight(.bold))
-            Text("SafeDrive AI watches the road through your front camera to detect drowsiness and distraction. Enable camera access in Settings to continue.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-            Spacer()
-            Button {
-                guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                UIApplication.shared.open(url)
-            } label: {
-                Text("Open Settings")
+        ZStack(alignment: .topTrailing) {
+            Theme.background.ignoresSafeArea()
+
+            Aura(size: 224)
+                .offset(x: 40, y: -32)
+
+            VStack(spacing: 0) {
+                Spacer()
+
+                Image(systemName: "camera.fill")
+                    .font(.system(size: 30, weight: .medium))
+                    .foregroundStyle(Theme.textSecondary)
+                    .frame(width: 74, height: 74)
+                    .background(
+                        RoundedRectangle(cornerRadius: Theme.Radius.icon, style: .continuous)
+                            .fill(Theme.surface2)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Radius.icon, style: .continuous)
+                            .strokeBorder(Theme.hairline, lineWidth: 1)
+                    )
+
+                Text("Camera access needed")
+                    .font(.sdTitle)
+                    .tracking(28 * -0.01)
+                    .foregroundStyle(Theme.textPrimary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 32)
+
+                Text("SafeDrive can't detect drowsiness without the front camera. Turn it on in Settings — footage is never recorded or uploaded.")
+                    .font(.system(size: 15))
+                    .lineSpacing(4)
+                    .foregroundStyle(Theme.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: 310) // ≈28 characters per line
+                    .padding(.top, 12)
+
+                Spacer()
+
+                Button {
+                    Haptics.tap()
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    UIApplication.shared.open(url)
+                } label: {
+                    Text("Open Settings")
+                }
+                .buttonStyle(SDButtonStyle(.gold))
+                .padding(.bottom, 16)
             }
-            .buttonStyle(BigButtonStyle())
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
+            .padding(.horizontal, 32)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.background)
     }
 }

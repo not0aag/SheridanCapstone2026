@@ -7,6 +7,12 @@ struct FaceOverlay: View {
     let geometry: FaceOverlayGeometry?
     let state: DriverState
 
+    /// Drives a slow, independent opacity breathing on the eye strokes when
+    /// safe — "alive, watching" without touching landmark positions, which
+    /// must stay perfectly real-time. Only affects a color multiplier, never
+    /// the geometry itself, so tracking never gains any lag.
+    @State private var breathe = false
+
     var body: some View {
         GeometryReader { proxy in
             Canvas { context, size in
@@ -15,6 +21,7 @@ struct FaceOverlay: View {
                     imageSize: geometry.imageSize, viewSize: size
                 )
                 let color = Theme.color(for: state)
+                let eyeOpacity = state == .safe ? (breathe ? 0.9 : 0.55) : 0.9
 
                 // Face outline — faint.
                 if geometry.faceContour.count > 2 {
@@ -28,12 +35,16 @@ struct FaceOverlay: View {
                     var path = Path()
                     path.addLines(eye.map(map))
                     path.closeSubpath()
-                    context.stroke(path, with: .color(color.opacity(0.9)), lineWidth: 2)
+                    context.stroke(path, with: .color(color.opacity(eyeOpacity)), lineWidth: 2)
                 }
             }
         }
         .allowsHitTesting(false)
         .animation(nil, value: state) // overlay must never lag the video
+        .animation(nil, value: geometry) // landmark positions: zero-lag, always
+        .onAppear {
+            withAnimation(Motion.ambient) { breathe = true }
+        }
     }
 
     /// Maps normalized (top-left origin) image coordinates onto a view that

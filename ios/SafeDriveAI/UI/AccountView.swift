@@ -65,6 +65,8 @@ struct AccountView: View {
                 .listRowBackground(Color.clear)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(Theme.background)
         .navigationTitle("Account")
         .navigationBarTitleDisplayMode(.inline)
     }

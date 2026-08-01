@@ -27,6 +27,8 @@ struct AddContactView: View {
                         .autocorrectionDisabled()
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(Theme.background)
             .navigationTitle("Add Contact")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

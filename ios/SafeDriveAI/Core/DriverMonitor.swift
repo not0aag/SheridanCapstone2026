@@ -39,20 +39,35 @@ final class DriverMonitor: ObservableObject {
     @Published private(set) var windowReady = false
     @Published private(set) var sessionStart: Date?
     @Published private(set) var debug = DebugSignals()
+    /// Set the moment a session ends, for the UI to present a trip summary
+    /// sheet. Consumed (set back to nil) once shown.
+    @Published var lastTripSummary: TripSummary?
+    /// True for a few seconds after a tiered early-warning check-in fires —
+    /// a soft "feeling okay?" prompt, well below a real DROWSY alert.
+    @Published private(set) var showCheckInBanner = false
+    /// Set when a prolonged-distraction message is ready to send, for the UI
+    /// to present the native SMS composer. The driver still sends it
+    /// themselves — this never sends silently in the background.
+    @Published var pendingMessageComposer: MessageDraft?
 
     // MARK: Components
     let camera = CameraService()
     let calibration: CalibrationManager
     let settings: AppSettings
+    let contactsStore: LocalContactsStore
     let speedGate = SpeedGate()
+    let tripLog = TripLog()
     private let engine = DetectionEngine()
     private let alerts = AlertPlayer()
     private let distractionTimer = DistractionTimer()
+    private let drowsinessTrendWatcher = DrowsinessTrendWatcher()
+    private let voiceCheckIn = VoiceCheckIn()
     private var cancellables = Set<AnyCancellable>()
 
-    init(settings: AppSettings, calibration: CalibrationManager) {
+    init(settings: AppSettings, calibration: CalibrationManager, contactsStore: LocalContactsStore) {
         self.settings = settings
         self.calibration = calibration
+        self.contactsStore = contactsStore
 
         camera.onSnapshot = { [weak self] snapshot in
             // Delegate/capture queue: hop to the main actor before touching state.
@@ -74,6 +89,8 @@ final class DriverMonitor: ObservableObject {
         guard calibration.isCalibrated else { return }
         engine.reset()
         distractionTimer.reset()
+        drowsinessTrendWatcher.reset()
+        tripLog.startTrip()
         driverState = .safe
         sessionStart = .now
         phase = .monitoring
@@ -92,6 +109,7 @@ final class DriverMonitor: ObservableObject {
         camera.stop()
         speedGate.stop()
         overlay = nil
+        lastTripSummary = tripLog.endTrip()
         UIApplication.shared.isIdleTimerDisabled = false
     }
 
@@ -136,6 +154,7 @@ final class DriverMonitor: ObservableObject {
                     phase = .paused(reason: "Below speed threshold")
                     engine.reset()
                     distractionTimer.reset()
+                    drowsinessTrendWatcher.reset()
                     driverState = .safe
                     alerts.update(for: .safe)
                 }
@@ -156,9 +175,27 @@ final class DriverMonitor: ObservableObject {
             windowReady = assessment.ready
             alerts.update(for: assessment.state)
             debug = Self.debugSignals(for: snapshot, baseline: baseline, settings: settings)
+            if assessment.ready {
+                tripLog.ingest(state: assessment.state, perclos: assessment.perclos, offRoadRate: assessment.offRoadRate)
+            }
 
             if distractionTimer.ingest(state: assessment.state, atMs: snapshot.timestampMs) == .fire {
                 Task { await sendDistractionAlert() }
+            }
+
+            // Soft early-warning tier — only relevant while still .safe; a
+            // real DROWSY alert already outranks and supersedes it.
+            if assessment.ready, assessment.state == .safe,
+               drowsinessTrendWatcher.ingest(
+                   perclos: assessment.perclos,
+                   alertThreshold: settings.perclosThreshold,
+                   atMs: snapshot.timestampMs
+               ) == .fire {
+                voiceCheckIn.speak()
+                showCheckInBanner = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 6) { [weak self] in
+                    self?.showCheckInBanner = false
+                }
             }
 
         case .idle:
@@ -213,15 +250,22 @@ final class DriverMonitor: ObservableObject {
 
     // MARK: Prolonged-distraction alert
 
-    /// Notifying trusted contacts by SMS runs through the backend + Twilio,
-    /// which is intentionally deferred in the standalone demo build. The local
-    /// audio/haptic alert (AlertPlayer) has already fired earlier in the
-    /// pipeline, so the driver is warned regardless. Re-enable the outbound
-    /// notification by restoring the `APIClient.shared.sendDistractionAlert`
-    /// call here once the backend/Twilio path is reconnected.
+    /// Notifies trusted contacts entirely on-device via the native SMS
+    /// composer — no backend or Twilio dependency. The local audio/haptic
+    /// alert (AlertPlayer) has already fired earlier in the pipeline
+    /// regardless, so the driver is warned either way; this is the
+    /// additional "let someone else know" step, and the driver still
+    /// reviews and sends it themselves (MessageComposerView never
+    /// auto-sends) rather than a message going out silently in the
+    /// background.
     private func sendDistractionAlert() async {
         guard settings.smsAlertsEnabled else { return }
-        // No-op until the backend/Twilio integration is reconnected.
+        let recipients = contactsStore.list().map(\.phoneNumber)
+        guard !recipients.isEmpty else { return }
+        pendingMessageComposer = MessageDraft(
+            recipients: recipients,
+            body: "SafeDrive AI: I may be distracted while driving. This is an automated check-in."
+        )
     }
 
     // MARK: Background behaviour
