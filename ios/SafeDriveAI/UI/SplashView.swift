@@ -20,10 +20,15 @@ struct SplashView: View {
         Color("LaunchBackground")
             .ignoresSafeArea()
             .overlay {
+                // Deliberately NOT `.resizable()`. The native launch screen
+                // draws this same asset at its native point size (the size
+                // its @1x/@2x/@3x files were exported to represent — 400pt
+                // wide); resizing here to any other width, even one that
+                // looks reasonable on its own, creates a visible jump the
+                // instant this view replaces the native screen. Rendering
+                // at native size guarantees the two are pixel-identical by
+                // construction, not by two numbers happening to match.
                 Image("LaunchLogo")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: 280)
             }
             .accessibilityHidden(true)
     }
