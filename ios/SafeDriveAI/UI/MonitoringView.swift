@@ -1,5 +1,4 @@
 import SwiftUI
-import MessageUI
 
 /// The screen the driver lives on during a trip. Design rule: readable in
 /// under a second, at arm's length, with no interaction required.
@@ -98,19 +97,6 @@ struct MonitoringView: View {
             )
         }
         .sheet(isPresented: $showSettings) { SettingsView() }
-        .sheet(item: composerBinding) { draft in
-            MessageComposerView(draft: draft) { monitor.pendingMessageComposer = nil }
-        }
-    }
-
-    /// `MFMessageComposeViewController` can't be presented on a device or
-    /// simulator that can't send texts — quietly clear the pending draft in
-    /// that case rather than presenting a broken sheet.
-    private var composerBinding: Binding<MessageDraft?> {
-        Binding(
-            get: { MFMessageComposeViewController.canSendText() ? monitor.pendingMessageComposer : nil },
-            set: { monitor.pendingMessageComposer = $0 }
-        )
     }
 
     // MARK: Header

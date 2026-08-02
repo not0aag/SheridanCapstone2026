@@ -1,4 +1,5 @@
 import SwiftUI
+import MessageUI
 
 /// Top-level routing.
 ///
@@ -18,6 +19,13 @@ struct RootView: View {
     /// matchedGeometryEffect when `monitor.phase` flips, instead of a flat
     /// cut between the two screens.
     @Namespace private var statusTransition
+
+    /// Holds the SwiftUI splash on top a little longer than the native
+    /// static launch screen alone would show it for — that one dismisses
+    /// the instant the app is interactive, which for a small SwiftUI app is
+    /// almost immediately. This makes the brand moment actually register
+    /// instead of flashing for a frame or two.
+    @State private var showingSplash = true
 
     private var isDriving: Bool {
         switch monitor.phase {
@@ -44,10 +52,23 @@ struct RootView: View {
             } else {
                 MainTabView()
             }
+
+            if showingSplash {
+                SplashView()
+                    .transition(.opacity)
+                    .zIndex(10)
+            }
         }
         .animation(.easeInOut(duration: 0.3), value: monitor.phase)
         .animation(.easeInOut(duration: 0.3), value: didOnboard)
         .animation(.easeInOut(duration: 0.3), value: camera.permissionDenied)
+        .task {
+            // The real content underneath is already mounted and ready
+            // during this hold — nothing is being blocked or delayed by it,
+            // this is purely the brand moment lasting long enough to see.
+            try? await Task.sleep(for: .milliseconds(1200))
+            withAnimation(.easeOut(duration: 0.35)) { showingSplash = false }
+        }
         // Presented from the root, not from MonitoringView. `stopMonitoring()`
         // sets `phase = .idle` before publishing the summary, which swaps
         // MonitoringView out for the tab shell — a sheet attached down there
@@ -56,6 +77,15 @@ struct RootView: View {
         // hosted by a view that outlives the transition.
         .sheet(item: $monitor.lastTripSummary) { summary in
             TripSummaryView(summary: summary)
+        }
+        // Same reasoning: hosted here, not under MonitoringView, so the
+        // composer can still present when a driver tests their Trusted
+        // Contacts setup from Settings while parked — MonitoringView isn't
+        // even in the hierarchy then. DriverMonitor already gates on
+        // MFMessageComposeViewController.canSendText() before ever setting
+        // this, so by the time it's non-nil it's known presentable.
+        .sheet(item: $monitor.pendingMessageComposer) { draft in
+            MessageComposerView(draft: draft) { monitor.pendingMessageComposer = nil }
         }
     }
 }

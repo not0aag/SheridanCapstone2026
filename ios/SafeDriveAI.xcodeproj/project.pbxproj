@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7DF1C523130E4CC2A7A621BD /* SplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317A17B6AC6844D19F5F209F /* SplashView.swift */; };
 		1F3A1C5FC1DD4E50BE6E02F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B0E802A90C0946CFB2853916 /* Assets.xcassets */; };
 		FE2E9EEC34594DD5B6266F3F /* AlertLifecycleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CA73A1326EC4D57B70AE416 /* AlertLifecycleTests.swift */; };
 		3DECACACD72941E29777B73E /* AlertLifecycle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2300887A2B29482EA1BAC62B /* AlertLifecycle.swift */; };
@@ -69,6 +70,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		317A17B6AC6844D19F5F209F /* SplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashView.swift; sourceTree = "<group>"; };
 		B0E802A90C0946CFB2853916 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4CA73A1326EC4D57B70AE416 /* AlertLifecycleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertLifecycleTests.swift; sourceTree = "<group>"; };
 		2300887A2B29482EA1BAC62B /* AlertLifecycle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertLifecycle.swift; sourceTree = "<group>"; };
@@ -214,6 +216,7 @@
 		AD194F56A288C01BD1D95D56 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				317A17B6AC6844D19F5F209F /* SplashView.swift */,
 				9DE145A0B9CB485B9749141B /* DriveHomeView.swift */,
 				9DF79007FB504DEC8FB09E4E /* AlertOverlayView.swift */,
 				BF3BB2EF708346E6B910327F /* FaceMeshView.swift */,
@@ -344,6 +347,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7DF1C523130E4CC2A7A621BD /* SplashView.swift in Sources */,
 				3DECACACD72941E29777B73E /* AlertLifecycle.swift in Sources */,
 				4FB7AA0BE937453DA613880E /* DriveHomeView.swift in Sources */,
 				EF093473FB08424E8559A2EE /* AlertOverlayView.swift in Sources */,

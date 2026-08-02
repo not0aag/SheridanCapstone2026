@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import MessageUI
 import simd
 
 /// Raw per-frame signal values for the live tuning overlay (Section 9 of the
@@ -304,10 +305,33 @@ final class DriverMonitor: ObservableObject {
         guard settings.smsAlertsEnabled else { return }
         let recipients = contactsStore.list().map(\.phoneNumber)
         guard !recipients.isEmpty else { return }
+        // Without this, a distraction alert on a device that can't send
+        // text (Wi-Fi-only iPad, no SIM/carrier) would silently drop —
+        // `pendingMessageComposer` would be set, nothing would ever present
+        // it, and nothing would tell the driver why. Better to not even try.
+        guard MFMessageComposeViewController.canSendText() else { return }
         pendingMessageComposer = MessageDraft(
             recipients: recipients,
             body: "SafeDrive AI: I may be distracted while driving. This is an automated check-in."
         )
+    }
+
+    /// Manual trigger for Trusted Contacts setup — bypasses distraction
+    /// detection and the "Text trusted contacts" toggle entirely, so a
+    /// driver can confirm their contacts and the message composer actually
+    /// work without simulating 10+ seconds of real distracted driving.
+    /// Returns false (and sets nothing) if there's no contact to message or
+    /// this device can't send text at all — callers use that to explain why
+    /// nothing happened rather than presenting a broken sheet.
+    @discardableResult
+    func sendTestMessage() -> Bool {
+        let recipients = contactsStore.list().map(\.phoneNumber)
+        guard !recipients.isEmpty, MFMessageComposeViewController.canSendText() else { return false }
+        pendingMessageComposer = MessageDraft(
+            recipients: recipients,
+            body: "This is a test message from SafeDrive AI. If you received this, your trusted contact setup is working."
+        )
+        return true
     }
 
     // MARK: Background behaviour
