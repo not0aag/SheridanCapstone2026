@@ -24,8 +24,8 @@ scipy>=1.10.0    # used by calibration.py (scipy.spatial.distance for EAR)
 # TFLite runtime — tflite-runtime has no Python 3.10 wheel for macOS, and no
 # Windows wheel at all, so both platforms use full tensorflow instead.
 # On Android, use the tflite AAR via Gradle.
-tensorflow-macos==2.14.0 ; sys_platform == "darwin"
-tensorflow==2.14.0 ; sys_platform != "darwin"
+tensorflow-macos==2.16.2 ; sys_platform == "darwin"
+tensorflow==2.21.0 ; sys_platform != "darwin"
 
 # Windows only — lets demo_unified.py resolve cameras by DirectShow device
 # name (skipping virtual/phone-as-webcam devices like Iriun) instead of
