@@ -15,9 +15,9 @@
 #   tensorflow-macos 2.14 was compiled against NumPy 1.x.
 #   NumPy 2.x causes an _ARRAY_API import error at runtime.
 
-mediapipe==0.10.8
-opencv-python>=4.8.0
-numpy<2.0
+mediapipe==1.0.0
+opencv-python>=5.0.0.93
+numpy<3.0
 pytest>=7.0
 scipy>=1.10.0    # used by calibration.py (scipy.spatial.distance for EAR)
 
