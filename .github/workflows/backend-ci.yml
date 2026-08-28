@@ -178,7 +178,7 @@ jobs:
           name: backend-coverage-${{ matrix.python-version }}
 
       - name: Upload coverage HTML report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report-${{ matrix.python-version }}
           path: backend/htmlcov
@@ -211,7 +211,7 @@ jobs:
           bandit -r app
 
       - name: Upload Bandit report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bandit-security-report
