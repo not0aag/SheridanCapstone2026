@@ -31,7 +31,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache pip packages
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-ml-${{ hashFiles('ml/requirements.txt') }}
@@ -82,7 +82,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache pip packages
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-ml-${{ hashFiles('ml/requirements.txt') }}
@@ -147,7 +147,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache pip packages
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-ml-${{ hashFiles('ml/requirements.txt') }}
@@ -234,7 +234,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache pip packages
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-ml-${{ hashFiles('ml/requirements.txt') }}
@@ -319,7 +319,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cache pip packages
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-ml-${{ hashFiles('ml/requirements.txt') }}
