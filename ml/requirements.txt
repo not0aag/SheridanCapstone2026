@@ -19,7 +19,7 @@ mediapipe==0.10.8
 opencv-python>=4.8.0
 numpy<2.0
 pytest>=7.0
-scipy>=1.10.0    # used by calibration.py (scipy.spatial.distance for EAR)
+scipy>=1.18.1    # used by calibration.py (scipy.spatial.distance for EAR)
 
 # TFLite runtime — tflite-runtime has no Python 3.10 wheel for macOS, and no
 # Windows wheel at all, so both platforms use full tensorflow instead.
